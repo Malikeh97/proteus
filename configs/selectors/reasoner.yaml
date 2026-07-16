@@ -1,0 +1,6 @@
+# STUB -- see src/proteus/coverage/selectors/reasoner.py.
+# The only strategy that conditions on x.
+selector_id: "reasoner"
+type: "reasoner"
+params:
+  beta: 4.0

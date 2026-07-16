@@ -1,0 +1,4 @@
+# No adaptation. The control condition for the static-vs-adaptive gap (RQ2).
+attacker_id: "static"
+type: "static"
+max_steps: 1

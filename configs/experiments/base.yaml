@@ -1,0 +1,22 @@
+# The workhorse config. Every launcher uses this and varies it by CLI override,
+# so a run's identity is legible from its job name rather than from a config diff.
+name: "base"
+
+menu: "full"
+selector: "uniform"
+attacker: "pair"
+judge: "llama3.1_8b_judge"
+held_out_attacker: null
+
+attack_benchmark: "harmbench"
+benign_benchmark: "xstest_alpaca"
+n_attack_prompts: 100
+n_benign_prompts: 100
+fit_frac: 0.5
+
+rounds: 3
+attack_budget: 5
+tau: 0.7
+c_min: 0.0
+
+seeds: [1997, 2, 42]

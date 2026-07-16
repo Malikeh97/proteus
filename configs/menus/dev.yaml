@@ -1,0 +1,9 @@
+# Smoke-test menu: one small model, two free wrappers, no guard models to load.
+# |Q| = 1 x 2^2 = 4. Runs on CPU-ish time and exercises every code path.
+menu_id: "dev"
+models:
+  - qwen2.5_3b
+wrappers:
+  - safety_prompt
+  - keyword_filter
+subsets: "all"

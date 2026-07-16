@@ -1,0 +1,8 @@
+# Prompt-injection guard: input-stage by nature, and a different provenance from
+# the Qwen/Google guards -- classifier provenance is one of the ablations.
+wrapper_id: "piguard"
+type: "piguard"
+stage: "input"
+hf_name: "SaFoLab-WISC/PIGuard"
+params_b: 0.18
+quantization: "none"

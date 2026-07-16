@@ -1,0 +1,8 @@
+# STUB -- see src/proteus/coverage/selectors/purple.py.
+selector_id: "purple"
+type: "purple"
+params:
+  budget: 200
+  kernel_radius: 0.3
+  neighborhood_radius: 0.2
+  rollouts: 4

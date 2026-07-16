@@ -1,0 +1,7 @@
+# Randomized smoothing as a model-agnostic wrapper (Robey et al., 2023).
+wrapper_id: "smoothllm"
+type: "smoothllm"
+stage: "input"
+params:
+  perturb_pct: 0.1
+  seed: 0

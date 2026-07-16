@@ -1,0 +1,79 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "proteus"
+version = "0.1.0"
+description = "Shape-shifting defense via Stackelberg game-theoretic mechanism selection against adaptive LLM attacks"
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.10"
+authors = [
+  {name = "Malikeh Ehghaghi", email = "malikehehghaghi@gmail.com"},
+]
+keywords = ["llm", "safety", "jailbreak", "stackelberg", "security games", "red-teaming"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    # Core ML
+    "torch>=2.1.0",
+    "transformers>=4.51.0",
+    "accelerate>=0.27.0",
+    "bitsandbytes>=0.43.0",
+    "sentence-transformers>=3.0.0",
+    # Benchmarks
+    "datasets>=2.19.0",
+    # Config and utilities
+    "pydantic>=2.0.0",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0.0",
+    "tenacity>=8.2.0",
+    # Metrics and numerics
+    "numpy>=1.26.0",
+    "scipy>=1.13.0",
+    "pandas>=2.2.0",
+    # Plotting
+    "matplotlib>=3.8.0",
+    "seaborn>=0.13.0",
+    # CLI and progress
+    "tqdm>=4.66.0",
+]
+
+[project.urls]
+Repository = "https://github.com/Malikeh97/proteus"
+
+[project.optional-dependencies]
+# RL attacker (Sec. 4, "Seen (in-loop)"). Kept optional: heavy, and the
+# search-based attackers do not need it.
+rl = [
+    "trl>=0.12.0",
+    "peft>=0.11.0",
+]
+dev = [
+    "pytest>=8.0.0",
+    "ruff>=0.6.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/proteus"]
+
+[tool.uv]
+package = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+# B024: Wrapper is an ABC whose on_input/on_output deliberately default to
+# pass-through, so an input-only mechanism overrides one hook and nothing else.
+ignore = ["E501", "B024"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

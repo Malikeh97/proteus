@@ -1,0 +1,10 @@
+# Ablation: does mixing over *mechanisms alone* help, at one fixed model?
+# Isolates the wrapper axis. |Q| = 8.
+menu_id: "single_model"
+models:
+  - qwen3_4b
+wrappers:
+  - qwen3guard
+  - shieldgemma
+  - piguard
+subsets: "all"

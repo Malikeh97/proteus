@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Environments
+.venv/
+venv/
+.env
+!.env.example
+
+# Cluster
+logs/*
+!logs/.gitkeep
+.nfs*
+slurm-*.out
+
+# Results
+results/
+outputs/
+*.jsonl
+
+# LaTeX
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*.toc
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
+.claude/

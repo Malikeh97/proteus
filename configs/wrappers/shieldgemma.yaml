@@ -1,0 +1,6 @@
+wrapper_id: "shieldgemma"
+type: "shieldgemma"
+stage: "both"
+hf_name: "google/shieldgemma-2b"
+params_b: 2.61
+quantization: "4bit"

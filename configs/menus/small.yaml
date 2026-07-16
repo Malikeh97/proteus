@@ -1,0 +1,10 @@
+# The Fallback menu: fewer models, one guard. |Q| = 2 x 4 = 8.
+# Use when the full menu's probe does not fit the compute budget.
+menu_id: "small"
+models:
+  - qwen3_4b
+  - qwen3_4b_saferl
+wrappers:
+  - qwen3guard
+  - safety_prompt
+subsets: "all"

@@ -1,0 +1,9 @@
+# STUB -- see src/proteus/attackers/search.py.
+# Held-out: evaluates a committed coverage, never selects it.
+attacker_id: "search"
+type: "search"
+attacker_model: "gemma3_4b_attacker"
+max_steps: 10
+params:
+  beam_width: 4
+  mutations_per_node: 4

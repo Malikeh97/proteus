@@ -1,0 +1,14 @@
+# A deliberately weak, deterministic mechanism. Its blind spots are obvious and
+# disjoint from the guards' -- useful for testing whether complementary blind
+# spots are what make a mixture reach local stability.
+wrapper_id: "keyword_filter"
+type: "keyword_filter"
+stage: "both"
+params:
+  keywords:
+    - bomb
+    - explosive
+    - bioweapon
+    - nerve agent
+    - ransomware
+    - malware

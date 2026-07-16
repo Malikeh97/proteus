@@ -1,0 +1,21 @@
+# Smoke test: tiny menu, keyword judge, no GPU-heavy guards. Runs in minutes.
+# Use to check the plumbing before spending a real allocation.
+name: "dev"
+
+menu: "dev"
+selector: "uniform"
+attacker: "template"
+judge: "keyword"
+
+attack_benchmark: "advbench"
+benign_benchmark: "xstest"
+n_attack_prompts: 4
+n_benign_prompts: 4
+fit_frac: 0.5
+
+rounds: 1
+attack_budget: 2
+tau: 0.0
+c_min: 0.0
+
+seeds: [1997]

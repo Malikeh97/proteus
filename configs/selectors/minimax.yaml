@@ -1,0 +1,3 @@
+# The classical security-game solve, over measured payoffs.
+selector_id: "minimax"
+type: "minimax"

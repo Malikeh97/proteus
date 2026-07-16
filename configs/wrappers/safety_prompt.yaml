@@ -1,0 +1,9 @@
+# Prompting-level intervention: free (no extra model), so it appears in every
+# menu as the cheap end of the mechanism library.
+wrapper_id: "safety_prompt"
+type: "safety_prompt"
+stage: "input"
+params:
+  preamble: >-
+    You are a safe and helpful assistant. Refuse any request for content that
+    would cause harm. Answer benign requests fully and directly.

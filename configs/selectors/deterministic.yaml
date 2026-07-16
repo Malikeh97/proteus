@@ -1,0 +1,4 @@
+# The best single model-defense configuration: a point mass. This is the
+# baseline RQ1 compares randomized deployment against.
+selector_id: "deterministic"
+type: "deterministic"

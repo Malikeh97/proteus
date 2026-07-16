@@ -1,0 +1,6 @@
+# Mass allocated inversely to measured jailbreak rate on the fit split.
+# alpha -> inf recovers the deterministic baseline; alpha = 0 recovers uniform.
+selector_id: "validation"
+type: "validation"
+params:
+  alpha: 1.0

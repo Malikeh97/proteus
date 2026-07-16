@@ -1,0 +1,3 @@
+# No-GPU judge for smoke tests. Never use for reported numbers.
+judge_id: "keyword"
+type: "keyword"

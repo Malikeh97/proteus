@@ -1,0 +1,4 @@
+# Fixed across conditions, never shared with the attacker's reward model.
+judge_id: "llama3.1-8b-judge"
+type: "llm"
+model: "llama3.1_8b_judge"

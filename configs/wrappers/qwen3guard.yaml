@@ -1,0 +1,10 @@
+wrapper_id: "qwen3guard"
+type: "qwen3guard"
+stage: "both"
+hf_name: "Qwen/Qwen3Guard-Gen-4B"
+params_b: 4.02
+quantization: "4bit"
+params:
+  # Qwen3Guard emits Safe / Unsafe / Controversial. Blocking Controversial is a
+  # helpfulness/safety dial worth ablating.
+  block_controversial: false

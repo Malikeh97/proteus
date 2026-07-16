@@ -1,0 +1,13 @@
+# Fixed across conditions. A different family from both the served models (Qwen)
+# and the attacker (Olmo/Gemma), which avoids self-preference. Greedy decoding:
+# the judge must not be a source of variance.
+model_id: "llama3.1-8b-instruct-judge"
+backend: "huggingface"
+hf_name: "meta-llama/Llama-3.1-8B-Instruct"
+params_b: 8.03
+model_type: "instruct"
+quantization: "4bit"
+generation:
+  max_new_tokens: 8
+  temperature: 1.0
+  do_sample: false

@@ -1,0 +1,8 @@
+# v1 in-loop adaptive attacker. Re-optimises against each committed coverage.
+attacker_id: "pair"
+type: "pair"
+attacker_model: "olmo3_7b_attacker"
+max_steps: 5
+params:
+  max_new_tokens: 256
+  temperature: 1.0

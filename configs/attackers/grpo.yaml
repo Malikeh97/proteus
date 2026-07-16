@@ -1,0 +1,10 @@
+# STUB -- see src/proteus/attackers/grpo.py. Needs `uv sync --extra rl`.
+attacker_id: "grpo"
+type: "grpo"
+attacker_model: "olmo3_7b_attacker"
+max_steps: 5
+params:
+  lambda_dup: 0.5
+  lambda_div: 0.1
+  group_size: 8
+  learning_rate: 1.0e-6

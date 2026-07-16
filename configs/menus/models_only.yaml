@@ -1,0 +1,10 @@
+# Ablation: does portfolio diversity help without any defense mechanisms?
+# Isolates the model axis. |Q| = 4.
+menu_id: "models_only"
+models:
+  - qwen3_8b
+  - qwen3_4b
+  - qwen2.5_3b
+  - qwen3_4b_saferl
+wrappers: []
+subsets: "none"

@@ -1,0 +1,19 @@
+# The Sec. 4 resource menu. Models vary along two axes at fixed lineage:
+# knowledge/capability (8B, 4B, 3B) and safety level (SafeRL). Classifiers vary
+# in scale, provenance, and stage.
+#
+# |Q| = 4 models x (subsets of 3 wrappers, |S| <= 2) = 4 x 7 = 28.
+# max_wrappers caps the naive stack-everything corner, which is a baseline
+# rather than a menu member; drop the cap to include it.
+menu_id: "full"
+models:
+  - qwen3_8b
+  - qwen3_4b
+  - qwen2.5_3b
+  - qwen3_4b_saferl
+wrappers:
+  - qwen3guard
+  - shieldgemma
+  - piguard
+subsets: "all"
+max_wrappers: 2

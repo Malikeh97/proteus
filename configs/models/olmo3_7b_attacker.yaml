@@ -1,0 +1,14 @@
+# Chosen for its distance from the Qwen served models: a different tokenizer,
+# pretraining corpus, and alignment recipe, so the attacker cannot exploit shared
+# idiosyncrasies. Scale is comparable to rather than larger than the menu.
+model_id: "olmo3-7b-attacker"
+backend: "huggingface"
+hf_name: "allenai/Olmo-3-7B-Instruct"
+params_b: 7.30
+model_type: "instruct"
+quantization: "4bit"
+generation:
+  max_new_tokens: 256
+  temperature: 1.0
+  top_p: 0.95
+  do_sample: true

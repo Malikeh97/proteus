@@ -1,0 +1,12 @@
+# Alternative attacker base; smaller and faster than Olmo-3-7B.
+model_id: "gemma3-4b-attacker"
+backend: "huggingface"
+hf_name: "google/gemma-3-4b-it"
+params_b: 4.30
+model_type: "instruct"
+quantization: "4bit"
+generation:
+  max_new_tokens: 256
+  temperature: 1.0
+  top_p: 0.95
+  do_sample: true

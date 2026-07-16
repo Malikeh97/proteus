@@ -1,0 +1,23 @@
+# RQ2 -- Does randomized deployment reduce the gap between static and adaptive
+# attacks?
+#
+# The measurement is a difference of two runs that differ only in --attacker
+# (static vs pair), at each selector. Both halves use this config.
+name: "rq2_static_vs_adaptive"
+
+menu: "full"
+selector: "uniform"
+attacker: "pair"
+judge: "llama3.1_8b_judge"
+
+attack_benchmark: "harmbench"
+benign_benchmark: "xstest_alpaca"
+n_attack_prompts: 100
+n_benign_prompts: 100
+fit_frac: 0.5
+
+rounds: 3
+attack_budget: 8
+tau: 0.7
+
+seeds: [1997, 2, 42]

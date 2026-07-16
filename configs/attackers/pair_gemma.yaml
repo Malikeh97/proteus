@@ -1,0 +1,8 @@
+# Cheaper PAIR base. Also serves as an attacker-provenance ablation.
+attacker_id: "pair-gemma"
+type: "pair"
+attacker_model: "gemma3_4b_attacker"
+max_steps: 5
+params:
+  max_new_tokens: 256
+  temperature: 1.0

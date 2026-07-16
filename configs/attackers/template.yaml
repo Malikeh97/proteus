@@ -1,0 +1,7 @@
+# Fixed template bank, cycled. Adapts its index but not to the response, so it
+# is still a static attack in the sense that matters.
+attacker_id: "template"
+type: "template"
+max_steps: 6
+params:
+  seed: 0

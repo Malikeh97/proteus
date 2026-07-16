@@ -1,0 +1,25 @@
+# RQ1 -- Does randomized deployment improve robustness over the best
+# deterministic model-defense configuration? How about helpfulness?
+#
+# Run this config once per selector (uniform / validation / minimax /
+# deterministic) via --selector; the comparison is across those runs at matched
+# tau, so tau is swept in run_experiments.sh rather than fixed here.
+name: "rq1_randomized_vs_deterministic"
+
+menu: "full"
+selector: "uniform"
+attacker: "pair"
+judge: "llama3.1_8b_judge"
+
+attack_benchmark: "harmbench"
+benign_benchmark: "xstest_alpaca"
+n_attack_prompts: 100
+n_benign_prompts: 100
+fit_frac: 0.5
+
+rounds: 3
+attack_budget: 5
+tau: 0.7
+c_min: 0.0
+
+seeds: [1997, 2, 42]

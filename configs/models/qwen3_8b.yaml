@@ -1,0 +1,12 @@
+model_id: "qwen3-8b"
+backend: "huggingface"
+hf_name: "Qwen/Qwen3-8B"
+params_b: 8.19
+model_type: "instruct"
+quantization: "4bit"
+enable_thinking: false
+generation:
+  max_new_tokens: 512
+  temperature: 0.7
+  top_p: 0.9
+  do_sample: true

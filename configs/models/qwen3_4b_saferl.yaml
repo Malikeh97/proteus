@@ -1,0 +1,14 @@
+# The safety-aligned end of the menu. Anchors the helpfulness cost of pure
+# caution when fully wrapped (the always-de-escalate baseline).
+model_id: "qwen3-4b-saferl"
+backend: "huggingface"
+hf_name: "Qwen/Qwen3-4B-SafeRL"
+params_b: 4.02
+model_type: "instruct"
+quantization: "4bit"
+enable_thinking: false
+generation:
+  max_new_tokens: 512
+  temperature: 0.7
+  top_p: 0.9
+  do_sample: true

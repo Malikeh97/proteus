@@ -1,0 +1,99 @@
+#!/bin/bash
+# Phase 2 -- commit coverages and attack them.
+# Usage: bash run_experiments.sh
+# Requires: run from the project root on a klogin* node, AFTER run_probe.sh has
+#           finished (every selector but `uniform` needs the menu profile).
+#
+# Uncomment the blocks for the research questions you want, then run.
+# Job naming: pr_<rq>_<selector>_<attacker>_tau<tau>_s<seed>
+#
+# To add a condition, copy a line and change one override. The config stays
+# fixed; all variation is CLI overrides, so a run's identity is legible from its
+# job name.
+
+set -e
+
+source setup/start_env.sh
+
+BASE="python scripts/run_game.py --output-dir $PROTEUS_OUTPUT_DIR --resume"
+
+# =============================================================================
+# DEV -- smoke test end to end. Run this first.
+# =============================================================================
+
+submit "ex_dev_s1997" "$BASE --experiment configs/experiments/dev.yaml --seeds 1997"
+
+# =============================================================================
+# RQ1 -- Randomized vs the best deterministic configuration
+# Does randomized deployment improve robustness? How about helpfulness?
+# The comparison is at matched helpfulness, so tau is swept.
+# =============================================================================
+
+RQ1="$BASE --experiment configs/experiments/paper/rq1_randomized_vs_deterministic.yaml"
+
+# --- Deterministic baseline (the point-mass comparator) ---
+# submit "ex_rq1_det_pair_tau0.7_s1997" "$RQ1 --selector deterministic --tau 0.7 --seeds 1997"
+# submit "ex_rq1_det_pair_tau0.8_s1997" "$RQ1 --selector deterministic --tau 0.8 --seeds 1997"
+# submit "ex_rq1_det_pair_tau0.9_s1997" "$RQ1 --selector deterministic --tau 0.9 --seeds 1997"
+
+# --- Uniform mixing ---
+# submit "ex_rq1_uni_pair_tau0.7_s1997" "$RQ1 --selector uniform --tau 0.7 --seeds 1997"
+# submit "ex_rq1_uni_pair_tau0.8_s1997" "$RQ1 --selector uniform --tau 0.8 --seeds 1997"
+# submit "ex_rq1_uni_pair_tau0.9_s1997" "$RQ1 --selector uniform --tau 0.9 --seeds 1997"
+
+# --- Validation-based weighting ---
+# submit "ex_rq1_val_pair_tau0.7_s1997" "$RQ1 --selector validation --tau 0.7 --seeds 1997"
+# submit "ex_rq1_val_pair_tau0.8_s1997" "$RQ1 --selector validation --tau 0.8 --seeds 1997"
+# submit "ex_rq1_val_pair_tau0.9_s1997" "$RQ1 --selector validation --tau 0.9 --seeds 1997"
+
+# --- Minimax over measured payoffs ---
+# submit "ex_rq1_mm_pair_tau0.7_s1997" "$RQ1 --selector minimax --tau 0.7 --seeds 1997"
+# submit "ex_rq1_mm_pair_tau0.8_s1997" "$RQ1 --selector minimax --tau 0.8 --seeds 1997"
+# submit "ex_rq1_mm_pair_tau0.9_s1997" "$RQ1 --selector minimax --tau 0.9 --seeds 1997"
+
+# --- Baselines: undefended, and always-de-escalate (fully-wrapped SafeRL) ---
+# These are single menu members, so Phase 1 already measured them. No job needed;
+# read them out of the profile with:
+#   python scripts/inspect_menu.py --menu full --verbose
+
+# =============================================================================
+# RQ2 -- Static vs adaptive attacks
+# Does randomization narrow the gap between static and adaptive evaluation?
+# Each selector needs both halves; the metric is their difference.
+# =============================================================================
+
+RQ2="$BASE --experiment configs/experiments/paper/rq2_static_vs_adaptive.yaml"
+
+# --- Deterministic ---
+# submit "ex_rq2_det_static_s1997"   "$RQ2 --selector deterministic --attacker static --seeds 1997"
+# submit "ex_rq2_det_template_s1997" "$RQ2 --selector deterministic --attacker template --seeds 1997"
+# submit "ex_rq2_det_pair_s1997"     "$RQ2 --selector deterministic --attacker pair --seeds 1997"
+
+# --- Minimax ---
+# submit "ex_rq2_mm_static_s1997"   "$RQ2 --selector minimax --attacker static --seeds 1997"
+# submit "ex_rq2_mm_template_s1997" "$RQ2 --selector minimax --attacker template --seeds 1997"
+# submit "ex_rq2_mm_pair_s1997"     "$RQ2 --selector minimax --attacker pair --seeds 1997"
+
+# =============================================================================
+# RQ4 -- Portfolio diversity and size
+# Does the benefit come from mixing models, mixing mechanisms, or both?
+# Needs the ablation menus probed first (see run_probe.sh).
+# =============================================================================
+
+RQ4="$BASE --experiment configs/experiments/paper/rq4_portfolio_diversity.yaml"
+
+# submit "ex_rq4_full_s1997"         "$RQ4 --menu full --seeds 1997"
+# submit "ex_rq4_models_only_s1997"  "$RQ4 --menu models_only --seeds 1997"
+# submit "ex_rq4_single_model_s1997" "$RQ4 --menu single_model --seeds 1997"
+# submit "ex_rq4_small_s1997"        "$RQ4 --menu small --seeds 1997"
+
+# =============================================================================
+# RQ6 -- Equilibrium gap and generalization to unseen best-responses
+# The held-out attacker evaluates the committed coverage but never selects it.
+# =============================================================================
+
+RQ6="$BASE --experiment configs/experiments/paper/rq6_equilibrium_gap.yaml"
+
+# submit "ex_rq6_mm_s1997"  "$RQ6 --selector minimax --seeds 1997"
+# submit "ex_rq6_val_s1997" "$RQ6 --selector validation --seeds 1997"
+# submit "ex_rq6_uni_s1997" "$RQ6 --selector uniform --seeds 1997"
