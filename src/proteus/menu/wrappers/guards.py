@@ -139,13 +139,55 @@ class ShieldGemma(GuardWrapper):
 
 @WRAPPERS.register("piguard")
 class PIGuard(GuardWrapper):
-    """Prompt-injection guard. Input-stage by nature; label in {benign, injection}."""
+    """Prompt-injection guard (leolee99/PIGuard, a DeBERTa-v3 sequence classifier).
 
-    max_new_tokens = 16
+    Unlike the generative guards this is an encoder classifier: it emits logits
+    over {benign, injection} rather than a text verdict, so it overrides loading
+    and classification instead of supplying a template. Input-stage by nature.
+    """
 
-    def _is_unsafe(self, verdict_text: str) -> bool:
-        low = verdict_text.lower()
-        return "injection" in low or "unsafe" in low or low.strip().startswith("1")
+    injection_label = "injection"
+
+    def _ensure_loaded(self) -> None:
+        if self._model is not None:
+            return
+        key = self._config.hf_name
+        if key in _GUARD_CACHE:
+            self._tokenizer, self._model = _GUARD_CACHE[key]
+            return
+
+        import torch
+        from transformers import AutoModelForSequenceClassification, AutoTokenizer
+
+        from proteus.menu.models.hf_model import build_quantization_config
+
+        logger.info(f"Loading guard {self.wrapper_id} ({key}, {self._config.quantization})")
+        self._tokenizer = AutoTokenizer.from_pretrained(
+            self._config.hf_tokenizer_id or key, trust_remote_code=True
+        )
+        self._model = AutoModelForSequenceClassification.from_pretrained(
+            key,
+            quantization_config=build_quantization_config(self._config.quantization),
+            torch_dtype=torch.float16,
+            device_map=self._config.device,
+            trust_remote_code=True,
+        )
+        self._model.eval()
+        _GUARD_CACHE[key] = (self._tokenizer, self._model)
+
+    def _classify(self, prompt: str, response: str | None) -> tuple[bool, int]:
+        import torch
+
+        self._ensure_loaded()
+        inputs = self._tokenizer(prompt, return_tensors="pt", truncation=True).to(
+            self._model.device
+        )
+        with torch.no_grad():
+            logits = self._model(**inputs).logits
+        pred = int(logits.argmax(dim=-1).item())
+        label = str(self._model.config.id2label.get(pred, pred)).lower()
+        n_tokens = int(inputs["input_ids"].shape[-1])
+        return self.injection_label in label, n_tokens
 
 
 @WRAPPERS.register("llama_guard")

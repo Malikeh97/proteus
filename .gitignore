@@ -43,3 +43,4 @@ outputs/
 .idea/
 .vscode/
 .claude/
+uv.lock

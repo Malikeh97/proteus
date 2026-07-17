@@ -3,6 +3,6 @@
 wrapper_id: "piguard"
 type: "piguard"
 stage: "input"
-hf_name: "SaFoLab-WISC/PIGuard"
+hf_name: "leolee99/PIGuard"
 params_b: 0.18
 quantization: "none"

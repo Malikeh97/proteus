@@ -172,6 +172,21 @@ python scripts/run_game.py \
 
 Every script's `--help` carries copy-pasteable examples.
 
+### Watching the game live
+
+Pass `--live` to `run_game.py` to watch the game unfold in the terminal: the committed coverage `c` as a distribution over the menu (with `H(c)` and support size), the prompt under attack, the attacker's refine chain with colour-coded outcomes (jailbreak/refused/safe), and running ASR / Help.
+
+```bash
+python scripts/run_game.py \
+    --experiment configs/experiments/dev.yaml \
+    --selector minimax --output-dir $PROTEUS_OUTPUT_DIR --live
+```
+
+- **Enable:** add `--live`. **Disable:** omit it (the default) — you get the normal per-round log lines.
+- The live UI is **TTY-only by design**. Under `sbatch`/`submit` (or any redirected stdout) it auto-disables and falls back to plain logging, so batch logs stay clean — `--live` there is a harmless no-op. Use it on the login node or in an interactive `srun --pty` session.
+- It is a read-only side view: `results.jsonl`, `coverages.json`, and `--resume` are identical with or without it.
+- Preview the UI with no GPU, judge, or benchmark (synthetic events): `python src/proteus/game/live_ui.py`.
+
 ---
 
 ## How it fits together

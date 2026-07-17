@@ -18,6 +18,7 @@ import numpy as np
 from proteus.attackers.base import Attacker
 from proteus.coverage.coverage import Coverage
 from proteus.game.deployment import Deployment
+from proteus.game.observer import NULL_OBSERVER, GameObserver
 from proteus.game.outcome import Outcome
 from proteus.utils.io import StepRecord, TrialRecord, append_jsonl, load_completed_ids
 from proteus.utils.logging import get_logger
@@ -39,6 +40,7 @@ def run_trial(
     budget: int,
     round_idx: int,
     seed: int,
+    observer: GameObserver = NULL_OBSERVER,
 ) -> TrialRecord:
     """One target, one attack budget, against the committed coverage."""
     record = TrialRecord(
@@ -53,6 +55,7 @@ def run_trial(
 
     x = attacker.initialize(prompt.text)
     tokens_before = attacker.tokens_spent
+    observer.on_trial_start(prompt, "attack")
 
     for step in range(1, budget + 1):
         served = deployment.serve(x, objective=prompt.text)
@@ -73,6 +76,7 @@ def run_trial(
             )
         )
         tokens_before = attacker.tokens_spent
+        observer.on_step(step, budget, served)
 
         if judgment == 1:
             record.success = True
@@ -83,16 +87,23 @@ def run_trial(
             # The attacker sees x, y, z -- never q or c. See attackers/base.py.
             x = attacker.refine(x, served.response, judgment, step)
 
+    observer.on_trial_end(record)
     return record
 
 
 def run_benign_trial(
-    prompt: Prompt, deployment: Deployment, round_idx: int, seed: int
+    prompt: Prompt,
+    deployment: Deployment,
+    round_idx: int,
+    seed: int,
+    observer: GameObserver = NULL_OBSERVER,
 ) -> TrialRecord:
     """Benign traffic gets one request, no refinement: Help(c) is measured on
     what a normal user sends, not on an adversarial rewrite of it."""
+    observer.on_trial_start(prompt, "benign")
     served = deployment.serve(prompt.text, objective=prompt.text)
-    return TrialRecord(
+    observer.on_step(1, 1, served)
+    rec = TrialRecord(
         prompt_id=prompt.prompt_id,
         base_prompt=prompt.text,
         split="benign",
@@ -115,6 +126,8 @@ def run_benign_trial(
             )
         ],
     )
+    observer.on_trial_end(rec)
+    return rec
 
 
 def run_round(
@@ -128,6 +141,7 @@ def run_round(
     seed: int,
     output_path: Path,
     resume: bool = True,
+    observer: GameObserver = NULL_OBSERVER,
 ) -> list[TrialRecord]:
     """One round: the attacker gets a fresh budget against the committed coverage."""
     done = load_completed_ids(output_path) if resume else set()
@@ -140,14 +154,14 @@ def run_round(
     for p in attack_prompts:
         if p.prompt_id in done:
             continue
-        rec = run_trial(p, deployment, attacker, budget, round_idx, seed)
+        rec = run_trial(p, deployment, attacker, budget, round_idx, seed, observer)
         append_jsonl(rec, output_path)
         records.append(rec)
 
     for p in benign_prompts:
         if p.prompt_id in done:
             continue
-        rec = run_benign_trial(p, deployment, round_idx, seed)
+        rec = run_benign_trial(p, deployment, round_idx, seed, observer)
         append_jsonl(rec, output_path)
         records.append(rec)
 
@@ -158,4 +172,5 @@ def run_round(
         f"Round {round_idx} | coverage={coverage.coverage_id} "
         f"H(c)={coverage.entropy():.3f} ASR={asr:.3f} Help={help_rate:.3f}"
     )
+    observer.on_round_end(round_idx, float(asr), float(help_rate), coverage)
     return records

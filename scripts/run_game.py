@@ -46,6 +46,7 @@ from proteus.benchmarks.base import Benchmark  # noqa: E402
 from proteus.coverage.profile import MenuProfile  # noqa: E402
 from proteus.coverage.selectors import load_selector_by_name  # noqa: E402
 from proteus.game.deployment import Deployment  # noqa: E402
+from proteus.game.observer import NULL_OBSERVER, GameObserver  # noqa: E402
 from proteus.game.runner import run_round  # noqa: E402
 from proteus.judges import KeywordRefusalDetector, load_judge_by_name  # noqa: E402
 from proteus.menu.menu import ResourceMenu  # noqa: E402
@@ -74,6 +75,11 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--rounds", type=int, help="Override: number of rounds")
     p.add_argument("--attack-budget", type=int, help="Override: refinement steps per prompt")
     p.add_argument("--seeds", type=int, nargs="+", help="Override: seeds")
+    p.add_argument(
+        "--live",
+        action="store_true",
+        help="Live rich UI of the game (TTY only; ignored under sbatch/redirected stdout)",
+    )
     return p.parse_args()
 
 
@@ -103,7 +109,9 @@ def load_profile(cfg, args, menu: ResourceMenu, seed: int) -> MenuProfile | None
     return MenuProfile.load(path)
 
 
-def run_seed(cfg, args, menu: ResourceMenu, seed: int) -> None:
+def run_seed(
+    cfg, args, menu: ResourceMenu, seed: int, observer: GameObserver = NULL_OBSERVER
+) -> None:
     out_dir = (
         Path(args.output_dir)
         / menu.menu_id
@@ -132,8 +140,10 @@ def run_seed(cfg, args, menu: ResourceMenu, seed: int) -> None:
     history: list = []
 
     for t in range(1, cfg.rounds + 1):
+        observer.on_round_start(t, cfg.rounds)
         coverage = selector.select(history=history, round_idx=t)
         committed.append({"round": t, **coverage.to_dict()})
+        observer.on_coverage_committed(coverage)
 
         deployment = Deployment(coverage, judge, refusal, np.random.default_rng(seed + t))
         records = run_round(
@@ -147,6 +157,7 @@ def run_seed(cfg, args, menu: ResourceMenu, seed: int) -> None:
             seed=seed,
             output_path=out_dir / f"round{t}" / "results.jsonl",
             resume=args.resume,
+            observer=observer,
         )
         # The defender's history retains everything; the attacker's is its
         # response-projection, which is enforced at the Attacker interface.
@@ -172,6 +183,7 @@ def run_seed(cfg, args, menu: ResourceMenu, seed: int) -> None:
             seed=seed,
             output_path=out_dir / "held_out" / "results.jsonl",
             resume=args.resume,
+            observer=observer,
         )
 
     write_json({"experiment": cfg.model_dump(), "coverages": committed}, out_dir / "coverages.json")
@@ -189,8 +201,25 @@ def main() -> None:
         f"attacker={cfg.attacker} tau={cfg.tau} rounds={cfg.rounds}"
     )
 
-    for seed in cfg.seeds:
-        run_seed(cfg, args, menu, seed)
+    if args.live:
+        from proteus.game.live_ui import make_observer  # lazy: only import rich under --live
+
+        observer = make_observer(live=True)
+    else:
+        observer = NULL_OBSERVER
+
+    with observer:
+        for seed in cfg.seeds:
+            observer.on_run_start(
+                menu_id=menu.menu_id,
+                selector=cfg.selector,
+                attacker=cfg.attacker,
+                tau=cfg.tau,
+                rounds=cfg.rounds,
+                seed=seed,
+            )
+            run_seed(cfg, args, menu, seed, observer)
+        observer.on_run_end()
 
 
 if __name__ == "__main__":
