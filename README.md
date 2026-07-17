@@ -1,16 +1,18 @@
 <div align="center">
 
-# 🦞 Proteus
+<img src="figures/logo.png" alt="Proteus logo" width="120">
 
-**Shape-shifting defense via Stackelberg game-theoretic mechanism selection against adaptive LLM attacks**
+# Proteus: Shape-shifting defense via Stackelberg game-theoretic mechanism selection against adaptive LLM attacks
+
+
 
 </div>
 
-A deployment is not one model behind one filter. It is a *menu* of models and defense mechanisms, and the safety question is which combination to serve — against an attacker who adapts to whatever you chose.
+A deployment is not one model behind one filter. It is a *menu* of models and defense mechanisms, and the safety question is which combination to serve, against an attacker who adapts to whatever you chose.
 
-Proteus formulates that as a Stackelberg security game. The defender commits a **coverage** `c ∈ Δ(Q)` over a resource menu `Q = M × 2^W`; a configuration is drawn per request; the attacker sees only responses and re-optimizes against what they reveal. No payoff matrix is supplied — attack success, helpfulness, and the residual incentive to deviate are all measured by execution.
+Proteus formulates that as a Stackelberg security game. The defender commits a **coverage** `c ∈ Δ(Q)` over a resource menu `Q = M × 2^W`; a configuration is drawn per request; the attacker sees only responses and re-optimizes against what they reveal. No payoff matrix is supplied. Attack success, helpfulness, and the residual incentive to deviate are all measured by execution.
 
-> In Homer's *Odyssey* (Book IV), Proteus can foresee the future and answer any question. To guard his knowledge he changes form — lion, serpent, leopard, wave, fire — and reveals the truth only after relentless pursuit.
+> Fun fact: In Homer's *Odyssey* (Book IV), Proteus can foresee the future and answer any question. To guard his knowledge he changes form  (e.g., lion, serpent, leopard, wave, fire), and reveals the truth only after relentless pursuit.
 
 ---
 
@@ -27,7 +29,7 @@ Proteus formulates that as a Stackelberg security game. The defender commits a *
 On a `klogin*` login node, from the project root:
 
 ```bash
-mkdir -p logs && sbatch setup/create_env_killarney_uv.sh   # ~15 min, once
+mkdir -p logs && sbatch setup/create_env_killarney_uv.sh
 source setup/start_env.sh
 
 python scripts/inspect_menu.py --menu dev --verbose        # no weights loaded
@@ -395,17 +397,4 @@ pytest -q          # 12 smoke tests, no GPU, no network
 ```
 
 They check the wiring, not the science: that `q` short-circuits the model when an input wrapper refuses, that payoffs are zero-sum, that a point mass has zero entropy, that `minimax` mixes when blind spots are complementary and collapses to a vertex when one configuration dominates.
-
----
-
-## Citation
-
-```bibtex
-@misc{ehghaghi2026proteus,
-  title  = {Proteus: Shape-shifting Defense via Stackelberg Game-Theoretic
-            Mechanism Selection Against Adaptive LLM Attacks},
-  author = {Ehghaghi, Malikeh},
-  year   = {2026},
-  note   = {CSC2555: Mathematical Foundations of Algorithmic Fairness}
-}
 ```
