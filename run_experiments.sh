@@ -1,7 +1,7 @@
 #!/bin/bash
 # Phase 2 -- commit coverages and attack them.
 # Usage: bash run_experiments.sh
-# Requires: run from the project root on a klogin* node, AFTER run_probe.sh has
+# Requires: run from the project root on a klogin* (Killarney) or fir login node, AFTER run_probe.sh has
 #           finished (every selector but `uniform` needs the menu profile).
 #
 # Uncomment the blocks for the research questions you want, then run.

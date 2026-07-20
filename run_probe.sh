@@ -1,7 +1,7 @@
 #!/bin/bash
 # Phase 1 -- measure J(q, x) and Help(q) for every configuration in a menu.
 # Usage: bash run_probe.sh
-# Requires: run from the project root on a klogin* node.
+# Requires: run from the project root on a klogin* (Killarney) or fir login node.
 #
 # Everything downstream needs this: the selectors optimise over these measured
 # payoffs. Uncomment the menus you want and run. Re-running is safe -- submit()

@@ -7,6 +7,10 @@
 _host=$(hostname)
 _host_f=$(hostname -f 2>/dev/null || echo "$_host")
 
+# fir is an Alliance cluster: it needs the software stack loaded before cuda.
+if [[ "$_host_f" == *.fir.alliancecan.ca ]]; then
+    module load StdEnv/2023
+fi
 module load cuda/12.6
 module load gcc arrow/19.0.1 python/3.11
 
@@ -68,6 +72,17 @@ if [[ "$_host" == klogin* || "$_host_f" == *.paice.vectorinstitute.ai ]]; then
                --output="logs/%j_$job_name.out" \
                --error="logs/%j_$job_name.out" \
                setup/submit_killarney.sbatch "$command"
+    }
+elif [[ "$_host_f" == *.fir.alliancecan.ca ]]; then
+    function submit() {
+        local job_name="$1"
+        local command="$2"
+        should_skip_job "$job_name" && return 0
+        mkdir -p logs
+        sbatch --job-name="$job_name" \
+               --output="logs/%j_$job_name.out" \
+               --error="logs/%j_$job_name.out" \
+               setup/submit_fir.sbatch "$command"
     }
 else
     echo "Unknown hostname: $_host - cannot define submit(). See setup/start_env.sh."

@@ -83,16 +83,17 @@ Results go to `$PROTEUS_OUTPUT_DIR`, which defaults to `$SCRATCH/proteus`.
 
 ### Cluster settings
 
-Killarney only, as configured. Adding a cluster means one hostname branch in `start_env.sh` plus a `setup/submit_<cluster>.sbatch`.
+Killarney and Fir, as configured. Adding another cluster means one hostname branch in `start_env.sh` plus a `setup/submit_<cluster>.sbatch` (and a `setup/create_env_<cluster>_uv.sh`).
 
-| | Killarney (Vector) |
-|---|---|
-| Login host | `klogin*` |
-| Partition | `gpubase_l40s_b3` |
-| Account | `aip-craffel` |
-| GPU | `--gres=gpu:l40s:1` (48 GB) |
-| Resources | `--cpus-per-task=8`, `--mem=128GB`, `--time=23:00:00` |
-| `$SCRATCH` | `/home/$USER/scratch/$USER` |
+| | Killarney (Vector) | Fir (Alliance) |
+|---|---|---|
+| Login host | `klogin*` | `*.fir.alliancecan.ca` |
+| Partition | `gpubase_l40s_b3` | `gpubase_bygpu_b3` |
+| Account | `aip-craffel` | `def-craffel_gpu` |
+| GPU | `--gres=gpu:l40s:1` (48 GB) | `--gres=gpu:h100:1` |
+| Resources | `--cpus-per-task=8`, `--mem=128GB`, `--time=23:00:00` | same |
+| Extra module | — | `StdEnv/2023` |
+| `$SCRATCH` | `/home/$USER/scratch/$USER` | `/scratch/$USER` |
 
 **Why one GPU is enough.** Every model in the menu loads at 4-bit `nf4`, and models are cached process-wide — a model appearing in many configurations is loaded once. The full menu (`|Q| = 13`, over 4 models + 5 wrappers) plus judge and attacker is ~25 GB of a 48 GB L40S:
 
