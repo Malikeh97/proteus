@@ -110,13 +110,13 @@ Killarney only, as configured. Adding a cluster means one hostname branch in `st
 
 Four phases. Phases 1–2 need a GPU and are submitted with `submit`; phases 3–4 are pure post-processing and run on the login node.
 
-| Phase | Script | Launcher | GPU | Produces |
-|---|---|---|---|---|
-| 0 | `inspect_menu.py` | — | no | The menu `Q`, printed. No weights loaded. |
-| 1 | `probe_menu.py` | `run_probe.sh` | yes | `J(q,x)` and `Help(q)` per configuration → `profile.json` |
-| 2 | `run_game.py` | `run_experiments.sh` | yes | Committed coverages + adaptive attack records |
-| 3 | `evaluate.py` | `run_analysis.sh` | no | `metrics.csv` |
-| 4 | `plot_results.py` | `run_analysis.sh` | no | `frontier / gap / entropy / cost.pdf` |
+| Phase | Script | Launcher | What the launcher does | GPU | Produces |
+|---|---|---|---|---|---|
+| 0 | `inspect_menu.py` | — | — | no | The menu `Q`, printed. No weights loaded. |
+| 1 | `probe_menu.py` | `run_probe.sh` | Submits GPU jobs that probe the menu, one per (menu, seed), measuring the payoffs every selector optimizes over. Uncomment the menu blocks (dev/full/small/ablation) you want. | yes | `J(q,x)` and `Help(q)` per configuration → `profile.json` |
+| 2 | `run_game.py` | `run_experiments.sh` | Submits GPU jobs that commit coverages and run adaptive attacks against them, one per research-question condition. Run only after Phase 1 finishes; uncomment the RQ blocks you want. | yes | Committed coverages + adaptive attack records |
+| 3 | `evaluate.py` | `run_analysis.sh` | Runs both post-processing phases on the login node: aggregates the Phase 2 records into metrics, then renders the plots. No GPU or submission. | no | `metrics.csv` |
+| 4 | `plot_results.py` | `run_analysis.sh` | (same script — the plotting step of `run_analysis.sh`) | no | `frontier / gap / entropy / cost.pdf` |
 
 Phase 1 is mandatory: every selector but `uniform` optimizes over the payoffs it measures. It also gives you **every single-configuration baseline for free** — undefended models, each wrapper alone, the naive stack of all wrappers, and the always-de-escalate policy are all just menu members.
 
