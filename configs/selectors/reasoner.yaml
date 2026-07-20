@@ -1,6 +1,8 @@
-# STUB -- see src/proteus/coverage/selectors/reasoner.py.
-# The only strategy that conditions on x.
+# The only strategy that conditions on x: an LLM risk classifier scores each
+# incoming prompt, and the coverage starts capability-first (low risk, favouring
+# the most helpful configs) and reroutes toward the safest configs as risk rises.
 selector_id: "reasoner"
 type: "reasoner"
 params:
-  beta: 4.0
+  beta: 4.0              # safety-tilt strength at maximum risk
+  risk_model: "qwen2.5_3b"  # LLM risk scorer (stem in configs/models/)

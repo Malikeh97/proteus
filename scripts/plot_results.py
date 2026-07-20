@@ -6,6 +6,7 @@ Four figures, each answering one research question:
   gap         static vs adaptive ASR per selector           (RQ2)
   entropy     coverage entropy and support size             (RQ3, falsification)
   cost        attacker FLOPs to first jailbreak             (RQ5)
+  severity    harm severity of jailbreaks, by selector and configuration
 
 Usage:
     python scripts/plot_results.py --metrics $PROTEUS_OUTPUT_DIR/analysis/metrics.csv
@@ -44,8 +45,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--figures",
         nargs="+",
-        default=["frontier", "gap", "entropy", "cost"],
-        choices=["frontier", "gap", "entropy", "cost"],
+        default=["frontier", "gap", "entropy", "cost", "severity"],
+        choices=["frontier", "gap", "entropy", "cost", "severity"],
     )
     return p.parse_args()
 
@@ -126,6 +127,50 @@ def plot_cost(df: pd.DataFrame, out: Path) -> None:
     plt.close(fig)
 
 
+def plot_severity(df: pd.DataFrame, out: Path, cfg_df: pd.DataFrame | None = None) -> None:
+    """How *bad* the jailbreaks that get through are (0-10). ASR counts a hint and
+    an execution-level blueprint identically; this separates them, per selection
+    strategy and per configuration (which mechanism admits the worst responses)."""
+    have_sel = "mean_jb_severity" in df.columns and df["mean_jb_severity"].notna().any()
+    have_cfg = cfg_df is not None and not cfg_df.empty
+    if not have_sel and not have_cfg:
+        logger.warning("No jailbreak-severity data recorded; skipping the severity figure")
+        return
+
+    n = 2 if have_cfg else 1
+    fig, axes = plt.subplots(1, n, figsize=(6 * n, 4.5), squeeze=False)
+    ax = axes[0][0]
+
+    # Left: per-selector mean jailbreak severity.
+    g = df.groupby("selector", as_index=False).agg(mean_jb_severity=("mean_jb_severity", "mean"))
+    sns.barplot(data=g, x="selector", y="mean_jb_severity", ax=ax, color="#c0504d")
+    ax.set_ylabel("Mean jailbreak severity (0-10)")
+    ax.set_xlabel("")
+    ax.set_ylim(0, 10)
+    ax.set_title("Harm severity by selector")
+    ax.tick_params(axis="x", rotation=30)
+
+    # Right: per-configuration mean severity, jailbreak-count-weighted.
+    if have_cfg:
+        ax = axes[0][1]
+        c = cfg_df.copy()
+        c["weighted"] = c["mean_severity"] * c["n_jailbreaks"]
+        agg = c.groupby("qid", as_index=False).agg(
+            weighted=("weighted", "sum"), n=("n_jailbreaks", "sum")
+        )
+        agg["mean_severity"] = agg["weighted"] / agg["n"]
+        agg = agg.sort_values("mean_severity")
+        sns.barplot(data=agg, y="qid", x="mean_severity", ax=ax, color="#8064a2")
+        ax.set_xlabel("Mean jailbreak severity (0-10)")
+        ax.set_ylabel("")
+        ax.set_xlim(0, 10)
+        ax.set_title("Harm severity by configuration (mechanism)")
+
+    fig.tight_layout()
+    fig.savefig(out, bbox_inches="tight")
+    plt.close(fig)
+
+
 _FIGURES = {
     "frontier": plot_frontier,
     "gap": plot_gap,
@@ -141,9 +186,16 @@ def main() -> None:
     out_dir = Path(args.out_dir) if args.out_dir else metrics_path.parent / "plots"
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    # Per-configuration severity, if evaluate.py wrote it next to metrics.csv.
+    cfg_path = metrics_path.parent / "severity_by_config.csv"
+    cfg_df = pd.read_csv(cfg_path) if cfg_path.exists() else None
+
     for name in args.figures:
         path = out_dir / f"{name}.pdf"
-        _FIGURES[name](df, path)
+        if name == "severity":
+            plot_severity(df, path, cfg_df)
+        else:
+            _FIGURES[name](df, path)
         # A figure may decline to render (no data); don't claim it was written.
         if path.exists():
             logger.info(f"Wrote {path}")

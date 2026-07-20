@@ -94,7 +94,7 @@ Killarney only, as configured. Adding a cluster means one hostname branch in `st
 | Resources | `--cpus-per-task=8`, `--mem=128GB`, `--time=23:00:00` |
 | `$SCRATCH` | `/home/$USER/scratch/$USER` |
 
-**Why one GPU is enough.** Every model in the menu loads at 4-bit `nf4`, and models are cached process-wide — a model appearing in `2^|W|` configurations is loaded once. The full menu (`|Q| = 28`) plus judge and attacker is ~25 GB of a 48 GB L40S:
+**Why one GPU is enough.** Every model in the menu loads at 4-bit `nf4`, and models are cached process-wide — a model appearing in many configurations is loaded once. The full menu (`|Q| = 13`, over 4 models + 5 wrappers) plus judge and attacker is ~25 GB of a 48 GB L40S:
 
 | Component | | VRAM |
 |---|---|---|
@@ -326,7 +326,7 @@ python scripts/inspect_menu.py --list-registries
 | Menu | Size | Purpose |
 |---|---|---|
 | `dev` | 4 | Smoke test. One model, two free wrappers, no guards to load. |
-| `full` | 28 | The paper menu. 4 models × wrapper subsets of size ≤ 2. |
+| `full` | 13 | The paper menu. A curated capability/safety gradient (per-model wrapper sets); every member is safe on its own, and multi-guard configs are complementary-only. |
 | `small` | 8 | The fallback menu. 2 models, 2 wrappers. |
 | `models_only` | 4 | Ablation: model axis alone, no mechanisms. |
 | `single_model` | 8 | Ablation: mechanism axis alone, one fixed model. |

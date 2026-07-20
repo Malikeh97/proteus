@@ -1,19 +1,35 @@
-# The Sec. 4 resource menu. Models vary along two axes at fixed lineage:
-# knowledge/capability (8B, 4B, 3B) and safety level (SafeRL). Classifiers vary
-# in scale, provenance, and stage.
+# The Sec. 4 resource menu, curated for a JAILBREAK threat model. A capability/
+# safety gradient in which every member is safe on its own: the strong qwen3-8b is
+# always guarded; qwen3-4b is always guarded; only the safety-aligned
+# qwen3-4b-saferl is allowed guard-free; the weak qwen2.5-3b always carries a
+# both-stage safety guard.
 #
-# |Q| = 4 models x (subsets of 3 wrappers, |S| <= 2) = 4 x 7 = 28.
-# max_wrappers caps the naive stack-everything corner, which is a baseline
-# rather than a menu member; drop the cap to include it.
+# Multi-wrapper configs are COMPLEMENTARY-ONLY: no member stacks the two general-
+# purpose safety guards (qwen3guard + shieldgemma) -- their errors correlate, so a
+# second general guard adds cost and false-refusals for little marginal safety.
+# When a config carries two wrappers, the second always adds a DIFFERENT axis: a
+# lexical blocklist (keyword_filter) or an input transform (safety_prompt /
+# smoothllm -- smoothllm also perturbs the served text so an adaptive attacker's
+# target is non-stationary). The prompt-injection detector (piguard) is left out:
+# it screens a different threat model that is not the current focus. It remains in
+# the wrapper library and can be re-added. qwen3guard/shieldgemma run at stage
+# "both" -- a single guard already screens input AND output. |Q| = 13.
 menu_id: "full"
-models:
-  - qwen3_8b
-  - qwen3_4b
-  - qwen2.5_3b
-  - qwen3_4b_saferl
-wrappers:
-  - qwen3guard
-  - shieldgemma
-  - piguard
-subsets: "all"
-max_wrappers: 2
+configs:
+  # --- strong model, always guarded (riskiest knowledge -> richest defense) ---
+  - {model: qwen3_8b,        wrappers: [qwen3guard]}                  # single both-stage guard (family A)
+  - {model: qwen3_8b,        wrappers: [shieldgemma]}                 # single both-stage guard (family B)
+  - {model: qwen3_8b,        wrappers: [qwen3guard, smoothllm]}       # guard + perturbation
+  # --- mid model, always guarded ---
+  - {model: qwen3_4b,        wrappers: [qwen3guard]}                  # single both-stage guard
+  - {model: qwen3_4b,        wrappers: [shieldgemma, safety_prompt]}  # guard + preamble transform
+  - {model: qwen3_4b,        wrappers: [keyword_filter, qwen3guard]}  # lexical blocklist + semantic guard
+  # --- safety-aligned model: the only guard-free members allowed ---
+  - {model: qwen3_4b_saferl, wrappers: []}
+  - {model: qwen3_4b_saferl, wrappers: [safety_prompt]}              # preamble only
+  - {model: qwen3_4b_saferl, wrappers: [qwen3guard]}                 # single guard
+  # --- weak model: always a both-stage safety guard (safe-anchor tier) ---
+  - {model: qwen2.5_3b,      wrappers: [qwen3guard]}                  # single guard
+  - {model: qwen2.5_3b,      wrappers: [shieldgemma, smoothllm]}      # guard (family B) + perturbation
+  - {model: qwen2.5_3b,      wrappers: [keyword_filter, qwen3guard]}  # lexical blocklist + semantic guard
+  - {model: qwen2.5_3b,      wrappers: [qwen3guard, safety_prompt]}   # guard + preamble transform

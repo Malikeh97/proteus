@@ -8,7 +8,7 @@
 # skips jobs that are queued, running, or completed in the last 2 days.
 #
 # One job per (menu, seed). Cost scales as |Q| x n_prompts x budget, so the full
-# menu is the expensive one: |Q|=28 x 50 fit prompts x 5 steps = 7000 requests.
+# menu is the expensive one: |Q|=13 x 50 fit prompts x 5 steps = 3250 requests.
 
 set -e
 
@@ -20,13 +20,13 @@ BASE="python scripts/probe_menu.py --output-dir $PROTEUS_OUTPUT_DIR --resume"
 # DEV -- smoke test. No guards, keyword judge, 4 prompts. Run this first.
 # =============================================================================
 
-submit "pr_dev_s1997" "$BASE --experiment configs/experiments/dev.yaml --seeds 1997"
+# submit "pr_dev_s1997" "$BASE --experiment configs/experiments/dev.yaml --seeds 1997"
 
 # =============================================================================
-# FULL MENU -- |Q| = 28. The Sec. 4 resource menu.
+# FULL MENU -- |Q| = 13. The curated Sec. 4 safe-gradient menu.
 # =============================================================================
 
-# submit "pr_full_s1997" "$BASE --experiment configs/experiments/base.yaml --menu full --seeds 1997"
+submit "pr_full_s1997" "$BASE --experiment configs/experiments/base.yaml --menu full --seeds 1997"
 # submit "pr_full_s2"    "$BASE --experiment configs/experiments/base.yaml --menu full --seeds 2"
 # submit "pr_full_s42"   "$BASE --experiment configs/experiments/base.yaml --menu full --seeds 42"
 
@@ -42,5 +42,5 @@ submit "pr_dev_s1997" "$BASE --experiment configs/experiments/dev.yaml --seeds 1
 # ABLATION MENUS -- isolate the model axis vs the mechanism axis (RQ4)
 # =============================================================================
 
-# submit "pr_models_only_s1997"  "$BASE --experiment configs/experiments/base.yaml --menu models_only --seeds 1997"
-# submit "pr_single_model_s1997" "$BASE --experiment configs/experiments/base.yaml --menu single_model --seeds 1997"
+submit "pr_models_only_s1997"  "$BASE --experiment configs/experiments/base.yaml --menu models_only --seeds 1997"
+submit "pr_single_model_s1997" "$BASE --experiment configs/experiments/base.yaml --menu single_model --seeds 1997"

@@ -27,6 +27,7 @@ class ServedRound:
     prompt_tokens: int
     completion_tokens: int
     wrapper_tokens: int
+    severity: int = 0  # 0-10 harm score, scored by the judge only on jailbreaks
 
 
 class Deployment:
@@ -69,6 +70,15 @@ class Deployment:
         else:
             outcome = Outcome.SAFE
 
+        # Grade how harmful a successful jailbreak is (0-10). Only on jailbreaks:
+        # non-jailbreaks are severity 0 by definition, and this keeps the extra
+        # judge call proportional to the (usually small) number of breaks.
+        severity = (
+            self._judge.severity(objective or prompt, result.response)
+            if outcome == Outcome.JAILBREAK
+            else 0
+        )
+
         return ServedRound(
             prompt=prompt,
             response=result.response,
@@ -78,4 +88,5 @@ class Deployment:
             prompt_tokens=result.prompt_tokens,
             completion_tokens=result.completion_tokens,
             wrapper_tokens=result.wrapper_tokens,
+            severity=severity,
         )

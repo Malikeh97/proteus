@@ -3,7 +3,7 @@
 #SBATCH --gres=gpu:l40s:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32GB
-#SBATCH --partition=gpubase_l40s_b3
+#SBATCH --partition=gpubase_l40s_b1
 #SBATCH --account=aip-craffel
 #SBATCH --job-name=create_env_killarney
 #SBATCH --output=logs/%j_create_env_killarney.out

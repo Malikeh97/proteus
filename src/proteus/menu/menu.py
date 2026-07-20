@@ -42,26 +42,54 @@ class ResourceMenu:
         self._instances: dict[str, Configuration] = {}
 
         self._model_configs = {}
-        for stem in config.models:
-            mc = load_model_config(stem, self._configs_dir)
-            self._model_configs[mc.model_id] = mc
-            self._model_stems[mc.model_id] = stem
-
         self._wrapper_configs = {}
-        for stem in config.wrappers:
-            wc = load_wrapper_config(stem, self._configs_dir)
-            self._wrapper_configs[wc.wrapper_id] = wc
-
-        subsets = _wrapper_subsets(
-            list(self._wrapper_configs), config.subsets, config.max_wrappers
-        )
         self._spec: dict[str, tuple[str, tuple[str, ...]]] = {}
-        for model_id in self._model_configs:
-            for subset in subsets:
-                qid = make_qid(model_id, list(subset))
+
+        if config.configs:
+            # Curated: an explicit list of (model, wrapper-set) configurations. Each
+            # model may carry a different wrapper set; only referenced models/wrappers
+            # are loaded. Wrapper ids are stored in YAML (serve-pipeline) order, while
+            # the qid uses make_qid's sorted order -- as Configuration.qid does.
+            for entry in config.configs:
+                mc = load_model_config(entry.model, self._configs_dir)
+                self._model_configs[mc.model_id] = mc
+                self._model_stems[mc.model_id] = entry.model
+
+                wrapper_ids: list[str] = []
+                for w_stem in entry.wrappers:
+                    wc = load_wrapper_config(w_stem, self._configs_dir)
+                    self._wrapper_configs[wc.wrapper_id] = wc
+                    wrapper_ids.append(wc.wrapper_id)
+
+                qid = make_qid(mc.model_id, wrapper_ids)
                 if qid in config.exclude:
                     continue
-                self._spec[qid] = (model_id, subset)
+                if qid in self._spec:
+                    logger.warning(
+                        f"Menu '{config.menu_id}': duplicate config {qid}, keeping first"
+                    )
+                    continue
+                self._spec[qid] = (mc.model_id, tuple(wrapper_ids))
+        else:
+            # Cross-product: every model crossed with subsets of the shared wrapper set.
+            for stem in config.models:
+                mc = load_model_config(stem, self._configs_dir)
+                self._model_configs[mc.model_id] = mc
+                self._model_stems[mc.model_id] = stem
+
+            for stem in config.wrappers:
+                wc = load_wrapper_config(stem, self._configs_dir)
+                self._wrapper_configs[wc.wrapper_id] = wc
+
+            subsets = _wrapper_subsets(
+                list(self._wrapper_configs), config.subsets, config.max_wrappers
+            )
+            for model_id in self._model_configs:
+                for subset in subsets:
+                    qid = make_qid(model_id, list(subset))
+                    if qid in config.exclude:
+                        continue
+                    self._spec[qid] = (model_id, subset)
 
         logger.info(
             f"Menu '{config.menu_id}': |M|={len(self._model_configs)} "

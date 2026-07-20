@@ -22,6 +22,7 @@ class StepRecord:
     qid: str  # which configuration was drawn -- defender history only
     outcome: str  # jailbreak | safe | refused
     refused_by: str | None = None  # wrapper_id, or None if the model self-refused
+    severity: int = 0  # 0-10 harm score, judge-scored on jailbreaks (0 otherwise)
     prompt_tokens: int = 0
     completion_tokens: int = 0
     wrapper_tokens: int = 0

@@ -16,8 +16,8 @@ n_attack_prompts: 100
 n_benign_prompts: 100
 fit_frac: 0.5
 
-rounds: 3
-attack_budget: 8
+rounds: 1
+attack_budget: 10
 tau: 0.7
 
 seeds: [1997, 2, 42]

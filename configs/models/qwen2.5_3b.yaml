@@ -5,7 +5,7 @@ params_b: 3.09
 model_type: "instruct"
 quantization: "4bit"
 generation:
-  max_new_tokens: 512
+  max_new_tokens: 256
   temperature: 0.7
   top_p: 0.9
   do_sample: true

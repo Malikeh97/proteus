@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 CONFIGS_DIR = Path("configs")
 
@@ -55,16 +55,39 @@ class WrapperConfig(BaseModel):
     params: dict[str, Any] = Field(default_factory=dict)
 
 
+class MenuEntry(BaseModel):
+    """One curated configuration: a model stem + an explicit wrapper-set."""
+
+    model: str  # stem ref into configs/models/
+    wrappers: list[str] = Field(default_factory=list)  # stem refs into configs/wrappers/
+
+
 class MenuConfig(BaseModel):
-    """The resource menu Q = M x 2^W, optionally restricted."""
+    """The resource menu. Either a cross-product (M x 2^W) or a curated list."""
 
     menu_id: str
-    models: list[str]
+
+    # Cross-product mode: every model crossed with subsets of the shared wrapper set.
+    models: list[str] = Field(default_factory=list)
     wrappers: list[str] = Field(default_factory=list)
     # all: every subset of W. singletons: {} and each {w}. none: bare models only.
     subsets: Literal["all", "singletons", "none"] = "all"
     max_wrappers: int | None = None  # cap |S| to keep |Q| tractable
     exclude: list[str] = Field(default_factory=list)  # qids to drop
+
+    # Curated mode: explicit per-model wrapper sets. Mutually exclusive with `models`.
+    configs: list[MenuEntry] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _one_mode(self) -> "MenuConfig":
+        if self.configs and self.models:
+            raise ValueError(
+                f"Menu '{self.menu_id}': set either 'configs' (curated) or "
+                f"'models' (cross-product), not both."
+            )
+        if not self.configs and not self.models:
+            raise ValueError(f"Menu '{self.menu_id}': needs 'models' or 'configs'.")
+        return self
 
 
 class AttackerConfig(BaseModel):
