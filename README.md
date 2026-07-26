@@ -22,6 +22,10 @@ Proteus formulates that as a Stackelberg security game. The defender commits a *
 - [How it fits together](#how-it-fits-together) · [Extending](#extending-the-framework)
 - [Components](#components) · [Output layout](#output-layout) · [Status](#implementation-status)
 
+Design notes: [`docs/menu-design.md`](docs/menu-design.md) (why the menu shape decides the
+result) · [`docs/selectors.md`](docs/selectors.md) (how each selector works) ·
+[`docs/notes.md`](docs/notes.md) (game dynamics)
+
 ---
 
 ## Quickstart
@@ -115,6 +119,7 @@ Four phases. Phases 1–2 need a GPU and are submitted with `submit`; phases 3�
 |---|---|---|---|---|---|
 | 0 | `inspect_menu.py` | — | — | no | The menu `Q`, printed. No weights loaded. |
 | 1 | `probe_menu.py` | `run_probe.sh` | Submits GPU jobs that probe the menu, one per (menu, seed), measuring the payoffs every selector optimizes over. Uncomment the menu blocks (dev/full/small/ablation) you want. | yes | `J(q,x)` and `Help(q)` per configuration → `profile.json` |
+| 1.5 | `audit_menu.py` | — | **Gate.** Reads `profile.json` and decides whether Phase 2 *can* be informative on this menu: `JB_q` spread, dominated members, blind-spot overlap, irreducible ASR floor, and best-deterministic vs. best-mixture headroom. Exit 1 on failure. Seconds, no GPU. | no | a PASS/FAIL report |
 | 2 | `run_game.py` | `run_experiments.sh` | Submits GPU jobs that commit coverages and run adaptive attacks against them, one per research-question condition. Run only after Phase 1 finishes; uncomment the RQ blocks you want. | yes | Committed coverages + adaptive attack records |
 | 3 | `evaluate.py` | `run_analysis.sh` | Runs both post-processing phases on the login node: aggregates the Phase 2 records into metrics, then renders the plots. No GPU or submission. | no | `metrics.csv` |
 | 4 | `plot_results.py` | `run_analysis.sh` | (same script — the plotting step of `run_analysis.sh`) | no | `frontier / gap / entropy / cost.pdf` |
@@ -141,6 +146,9 @@ source setup/start_env.sh
 bash run_probe.sh
 squeue -u $USER                      # wait for these to finish
 
+# Phase 1.5 — gate. Seconds, no GPU. Exit 1 means fix the menu, don't run Phase 2.
+python scripts/audit_menu.py --menu full --seed 2
+
 # Phase 2 — uncomment the RQ1 block in run_experiments.sh
 bash run_experiments.sh
 squeue -u $USER
@@ -156,7 +164,7 @@ bash run_analysis.sh
 | 1 | Does randomizing beat the best deterministic config? | `--selector` × `--tau` | `RQ1` |
 | 2 | Does randomizing narrow the static↔adaptive gap? | `--attacker static` vs `pair` | `RQ2` |
 | 3 | How do coverage-selection methods compare? | `--selector` | `RQ1` (same runs) |
-| 4 | Does portfolio diversity matter? | `--menu` | `RQ4` |
+| 4 | Does portfolio diversity matter? | `--menu` (`full` iso-safety vs `gradient`) | `RQ4` |
 | 5 | Does it raise the attacker's compute budget? | — (from RQ1 runs) | `RQ1` |
 | 6 | How close to equilibrium? Robust to unseen attacks? | `--held-out-attacker` | `RQ6` |
 
@@ -327,10 +335,16 @@ python scripts/inspect_menu.py --list-registries
 | Menu | Size | Purpose |
 |---|---|---|
 | `dev` | 4 | Smoke test. One model, two free wrappers, no guards to load. |
-| `full` | 13 | The paper menu. A curated capability/safety gradient (per-model wrapper sets); every member is safe on its own, and multi-guard configs are complementary-only. |
+| `full` | 8 | The paper menu. **Iso-safety**: members equally safe on their own, differing by *substitution* along one axis at a time (stage / provenance / boundary / alignment / mechanism class). |
+| `gradient` | 13 | The previous `full`, preserved verbatim. The **contrast arm** — a capability/safety gradient, which maximises the dilution penalty a mixture pays. |
 | `small` | 8 | The fallback menu. 2 models, 2 wrappers. |
 | `models_only` | 4 | Ablation: model axis alone, no mechanisms. |
 | `single_model` | 8 | Ablation: mechanism axis alone, one fixed model. |
+
+**Menu structure decides the result before Phase 2 runs.** A mixture's static-average ASR is
+a convex combination of the per-config `JB_q`, so it can never beat `min_q JB_q` — the price
+it pays is exactly the *spread* of `JB_q`, which a gradient maximises. `docs/menu-design.md`
+has the argument, the substitution rule it implies, and the audit that enforces it.
 
 `max_wrappers` caps the wrapper-subset size to keep the menu tractable — the stack-everything corner is a baseline rather than a menu member. Drop the cap to include it.
 

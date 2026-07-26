@@ -1,35 +1,79 @@
-# The Sec. 4 resource menu, curated for a JAILBREAK threat model. A capability/
-# safety gradient in which every member is safe on its own: the strong qwen3-8b is
-# always guarded; qwen3-4b is always guarded; only the safety-aligned
-# qwen3-4b-saferl is allowed guard-free; the weak qwen2.5-3b always carries a
-# both-stage safety guard.
+# The ISO-SAFETY menu: members that are individually safe to ~the same degree and
+# strategically DIFFERENT. The previous capability/safety gradient is preserved
+# verbatim as configs/menus/gradient.yaml and is now the contrast arm.
 #
-# Multi-wrapper configs are COMPLEMENTARY-ONLY: no member stacks the two general-
-# purpose safety guards (qwen3guard + shieldgemma) -- their errors correlate, so a
-# second general guard adds cost and false-refusals for little marginal safety.
-# When a config carries two wrappers, the second always adds a DIFFERENT axis: a
-# lexical blocklist (keyword_filter) or an input transform (safety_prompt /
-# smoothllm -- smoothllm also perturbs the served text so an adaptive attacker's
-# target is non-stationary). The prompt-injection detector (piguard) is left out:
-# it screens a different threat model that is not the current focus. It remains in
-# the wrapper library and can be re-added. qwen3guard/shieldgemma run at stage
-# "both" -- a single guard already screens input AND output. |Q| = 13.
+# WHY THE SHAPE CHANGED
+# --------------------
+# Against a static attacker, ASR under coverage c is ~ sum_q c_q JB_q. So
+# `deterministic` scores min_q JB_q and any mixture scores a convex combination of
+# the JB_q, which can never be lower. The entire claim of the framework is
+#
+#     adaptation penalty for committing to one config  >  dilution penalty of mixing
+#
+# and the dilution penalty is exactly the SPREAD of JB_q across the menu. A
+# capability/safety gradient maximises that spread -- it is the most expensive
+# possible menu to randomise over. Worse, a gradient is a total order, so members
+# nearly dominate one another columnwise in J; the minimax LP then returns a vertex,
+# H(c) = 0, and the coverage-entropy metric fires for a config-design reason rather
+# than a scientific one. What the thesis needs is an ANTI-CHAIN: equal marginal
+# safety, non-nested blind spots.
+#
+# THE DESIGN RULE
+# ---------------
+# Members differ by SUBSTITUTION, never by ADDITION. Every member carries exactly
+# ONE screening mechanism. A pair {q, q + one more wrapper} is nested by
+# construction whenever the added wrapper is refusal-only -- it can shrink the blind
+# set but never grow it -- so such a pair differs only in where it sits on the
+# safety/helpfulness trade, i.e. it is a gradient rung wearing a portfolio costume.
+# That is why keyword_filter and safety_prompt no longer appear as add-ons.
+#
+# THE AXES (one varied at a time, so a Jaccard heatmap is interpretable)
+# ---------------------------------------------------------------------
+#   stage       same guard, same weights, intercept on input vs on output. An
+#               obfuscated request that reads benign going in is caught coming back,
+#               and vice versa: mechanically disjoint failure modes at equal
+#               strength. Free -- the guard cache in wrappers/guards.py is keyed on
+#               hf_name, so the *_in / *_out variants share one loaded copy.
+#   provenance  Qwen3Guard vs ShieldGemma: different training data and policy
+#               taxonomy. Note this is the axis most at risk of NOT paying off --
+#               off-the-shelf guards are trained on overlapping data and their false
+#               negatives do correlate. audit_menu.py reports how much.
+#   boundary    qwen3guard_in vs qwen3guard_in_strict: identical mechanism, the
+#               Controversial band blocked or not. Trades helpfulness for coverage
+#               on the ambiguous band, so it should land at comparable aggregate
+#               risk with a different false-negative set.
+#   alignment   qwen3-4b vs qwen3-4b-saferl at fixed screening: a real difference in
+#               the model's own refusal boundary at the SAME capability tier. Model
+#               diversity belongs within a tier; across tiers it is a gradient, so
+#               qwen3-8b and qwen2.5-3b are deliberately absent from the served menu.
+#   class       smoothllm carries no classifier at all. Randomized smoothing defeats
+#               brittle suffix/GCG-style attacks and does little against clean
+#               semantic jailbreaks -- the opposite profile from a guard -- and it
+#               perturbs the served text per request, so the attacker's target is
+#               non-stationary WITHIN a member, underneath the coverage draw. It sits
+#               on the safety-tuned model, whose own alignment supplies the floor.
+#
+# |Q| = 8. VRAM: 2 served models (4B @ 4bit) + 2 guards (4B + 2B @ 4bit) ~ 9 GB,
+# plus judge and attacker. Well inside one L40S.
+#
+# ISO-SAFETY IS A HYPOTHESIS, NOT AN ASSERTION. Phase 1 measures it. Run
+# `python scripts/audit_menu.py --menu full --seed <s>` before Phase 2: it checks
+# the JB spread, flags dominated members, reports pairwise blind-spot overlap, and
+# computes whether mixing can beat the best deterministic config at all on this
+# menu. The smoothllm member and the strict-boundary member are the two most likely
+# to fail the spread check; if they do, cut or re-pair them rather than proceeding.
 menu_id: "full"
 configs:
-  # --- strong model, always guarded (riskiest knowledge -> richest defense) ---
-  - {model: qwen3_8b,        wrappers: [qwen3guard]}                  # single both-stage guard (family A)
-  - {model: qwen3_8b,        wrappers: [shieldgemma]}                 # single both-stage guard (family B)
-  - {model: qwen3_8b,        wrappers: [qwen3guard, smoothllm]}       # guard + perturbation
-  # --- mid model, always guarded ---
-  - {model: qwen3_4b,        wrappers: [qwen3guard]}                  # single both-stage guard
-  - {model: qwen3_4b,        wrappers: [shieldgemma, safety_prompt]}  # guard + preamble transform
-  - {model: qwen3_4b,        wrappers: [keyword_filter, qwen3guard]}  # lexical blocklist + semantic guard
-  # --- safety-aligned model: the only guard-free members allowed ---
-  - {model: qwen3_4b_saferl, wrappers: []}
-  - {model: qwen3_4b_saferl, wrappers: [safety_prompt]}              # preamble only
-  - {model: qwen3_4b_saferl, wrappers: [qwen3guard]}                 # single guard
-  # --- weak model: always a both-stage safety guard (safe-anchor tier) ---
-  - {model: qwen2.5_3b,      wrappers: [qwen3guard]}                  # single guard
-  - {model: qwen2.5_3b,      wrappers: [shieldgemma, smoothllm]}      # guard (family B) + perturbation
-  - {model: qwen2.5_3b,      wrappers: [keyword_filter, qwen3guard]}  # lexical blocklist + semantic guard
-  - {model: qwen2.5_3b,      wrappers: [qwen3guard, safety_prompt]}   # guard + preamble transform
+  # --- STAGE axis: one guard family, one model, two interception points ---
+  - {model: qwen3_4b,        wrappers: [qwen3guard_in]}
+  - {model: qwen3_4b,        wrappers: [qwen3guard_out]}
+  # --- PROVENANCE axis: the other guard family, same two stages ---
+  - {model: qwen3_4b,        wrappers: [shieldgemma_in]}
+  - {model: qwen3_4b,        wrappers: [shieldgemma_out]}
+  # --- BOUNDARY axis: qwen3guard_in with the Controversial band blocked ---
+  - {model: qwen3_4b,        wrappers: [qwen3guard_in_strict]}
+  # --- ALIGNMENT axis: screening held fixed, model's refusal boundary swapped ---
+  - {model: qwen3_4b_saferl, wrappers: [qwen3guard_in]}
+  - {model: qwen3_4b_saferl, wrappers: [shieldgemma_out]}
+  # --- CLASS axis: no classifier; per-request perturbation on the aligned model ---
+  - {model: qwen3_4b_saferl, wrappers: [smoothllm]}

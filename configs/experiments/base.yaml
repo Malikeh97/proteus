@@ -12,7 +12,7 @@ attack_benchmark: "harmbench"
 benign_benchmark: "xstest_alpaca"
 n_attack_prompts: 100
 n_benign_prompts: 100
-fit_frac: 0.5
+fit_frac: 0.3
 
 rounds: 1
 attack_budget: 10

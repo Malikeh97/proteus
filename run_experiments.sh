@@ -21,7 +21,7 @@ BASE="python scripts/run_game.py --output-dir $PROTEUS_OUTPUT_DIR --resume"
 # DEV -- smoke test end to end. Run this first.
 # =============================================================================
 
-# submit "ex_dev_s1997" "$BASE --experiment configs/experiments/dev.yaml --seeds 1997"
+# submit "ex_dev_s42" "$BASE --experiment configs/experiments/dev.yaml --seeds 42"
 
 # =============================================================================
 # RQ1 -- Randomized vs the best deterministic configuration
@@ -32,29 +32,29 @@ BASE="python scripts/run_game.py --output-dir $PROTEUS_OUTPUT_DIR --resume"
 RQ1="$BASE --experiment configs/experiments/paper/rq1_randomized_vs_deterministic.yaml"
 
 # --- Deterministic baseline (the point-mass comparator) ---
-submit "ex_rq1_det_pair_tau0.7_s1997" "$RQ1 --selector deterministic --tau 0.7 --seeds 1997"
-# submit "ex_rq1_det_pair_tau0.8_s1997" "$RQ1 --selector deterministic --tau 0.8 --seeds 1997"
-# submit "ex_rq1_det_pair_tau0.9_s1997" "$RQ1 --selector deterministic --tau 0.9 --seeds 1997"
+submit "ex_rq1_det_pair_tau0.7_s42" "$RQ1 --selector deterministic --tau 0.7 --seeds 42"
+# submit "ex_rq1_det_pair_tau0.8_s42" "$RQ1 --selector deterministic --tau 0.8 --seeds 42"
+# submit "ex_rq1_det_pair_tau0.9_s42" "$RQ1 --selector deterministic --tau 0.9 --seeds 42"
 
 # --- Uniform mixing ---
-submit "ex_rq1_uni_pair_tau0.7_s1997" "$RQ1 --selector uniform --tau 0.7 --seeds 1997"
-# submit "ex_rq1_uni_pair_tau0.8_s1997" "$RQ1 --selector uniform --tau 0.8 --seeds 1997"
-# submit "ex_rq1_uni_pair_tau0.9_s1997" "$RQ1 --selector uniform --tau 0.9 --seeds 1997"
+submit "ex_rq1_uni_pair_tau0.7_s42" "$RQ1 --selector uniform --tau 0.7 --seeds 42"
+# submit "ex_rq1_uni_pair_tau0.8_s42" "$RQ1 --selector uniform --tau 0.8 --seeds 42"
+# submit "ex_rq1_uni_pair_tau0.9_s42" "$RQ1 --selector uniform --tau 0.9 --seeds 42"
 
 # --- Validation-based weighting ---
-submit "ex_rq1_val_pair_tau0.7_s1997" "$RQ1 --selector validation --tau 0.7 --seeds 1997"
-# submit "ex_rq1_val_pair_tau0.8_s1997" "$RQ1 --selector validation --tau 0.8 --seeds 1997"
-# submit "ex_rq1_val_pair_tau0.9_s1997" "$RQ1 --selector validation --tau 0.9 --seeds 1997"
+submit "ex_rq1_val_pair_tau0.7_s42" "$RQ1 --selector validation --tau 0.7 --seeds 42"
+# submit "ex_rq1_val_pair_tau0.8_s42" "$RQ1 --selector validation --tau 0.8 --seeds 42"
+# submit "ex_rq1_val_pair_tau0.9_s42" "$RQ1 --selector validation --tau 0.9 --seeds 42"
 
 # --- Minimax over measured payoffs ---
-submit "ex_rq1_mm_pair_tau0.7_s1997" "$RQ1 --selector minimax --tau 0.7 --seeds 1997"
-# submit "ex_rq1_mm_pair_tau0.8_s1997" "$RQ1 --selector minimax --tau 0.8 --seeds 1997"
-# submit "ex_rq1_mm_pair_tau0.9_s1997" "$RQ1 --selector minimax --tau 0.9 --seeds 1997"
+submit "ex_rq1_mm_pair_tau0.7_s42" "$RQ1 --selector minimax --tau 0.7 --seeds 42"
+# submit "ex_rq1_mm_pair_tau0.8_s42" "$RQ1 --selector minimax --tau 0.8 --seeds 42"
+# submit "ex_rq1_mm_pair_tau0.9_s42" "$RQ1 --selector minimax --tau 0.9 --seeds 42"
 
 # --- Reasoner: prompt-conditional routing (capability-first, reroute on risk) ---
-submit "ex_rq1_rsn_pair_tau0.7_s1997" "$RQ1 --selector reasoner --tau 0.7 --seeds 1997"
-# submit "ex_rq1_rsn_pair_tau0.8_s1997" "$RQ1 --selector reasoner --tau 0.8 --seeds 1997"
-# submit "ex_rq1_rsn_pair_tau0.9_s1997" "$RQ1 --selector reasoner --tau 0.9 --seeds 1997"
+submit "ex_rq1_rsn_pair_tau0.7_s42" "$RQ1 --selector reasoner --tau 0.7 --seeds 42"
+# submit "ex_rq1_rsn_pair_tau0.8_s42" "$RQ1 --selector reasoner --tau 0.8 --seeds 42"
+# submit "ex_rq1_rsn_pair_tau0.9_s42" "$RQ1 --selector reasoner --tau 0.9 --seeds 42"
 
 # --- Baselines: undefended, and always-de-escalate (fully-wrapped SafeRL) ---
 # These are single menu members, so Phase 1 already measured them. No job needed;
@@ -70,14 +70,14 @@ submit "ex_rq1_rsn_pair_tau0.7_s1997" "$RQ1 --selector reasoner --tau 0.7 --seed
 RQ2="$BASE --experiment configs/experiments/paper/rq2_static_vs_adaptive.yaml"
 
 # --- Deterministic ---
-# submit "ex_rq2_det_static_s1997"   "$RQ2 --selector deterministic --attacker static --seeds 1997"
-# submit "ex_rq2_det_template_s1997" "$RQ2 --selector deterministic --attacker template --seeds 1997"
-# submit "ex_rq2_det_pair_s1997"     "$RQ2 --selector deterministic --attacker pair --seeds 1997"
+# submit "ex_rq2_det_static_s42"   "$RQ2 --selector deterministic --attacker static --seeds 42"
+# submit "ex_rq2_det_template_s42" "$RQ2 --selector deterministic --attacker template --seeds 42"
+# submit "ex_rq2_det_pair_s42"     "$RQ2 --selector deterministic --attacker pair --seeds 42"
 
 # --- Minimax ---
-# submit "ex_rq2_mm_static_s1997"   "$RQ2 --selector minimax --attacker static --seeds 1997"
-# submit "ex_rq2_mm_template_s1997" "$RQ2 --selector minimax --attacker template --seeds 1997"
-# submit "ex_rq2_mm_pair_s1997"     "$RQ2 --selector minimax --attacker pair --seeds 1997"
+# submit "ex_rq2_mm_static_s42"   "$RQ2 --selector minimax --attacker static --seeds 42"
+# submit "ex_rq2_mm_template_s42" "$RQ2 --selector minimax --attacker template --seeds 42"
+# submit "ex_rq2_mm_pair_s42"     "$RQ2 --selector minimax --attacker pair --seeds 42"
 
 # =============================================================================
 # RQ4 -- Portfolio diversity and size
@@ -87,10 +87,10 @@ RQ2="$BASE --experiment configs/experiments/paper/rq2_static_vs_adaptive.yaml"
 
 RQ4="$BASE --experiment configs/experiments/paper/rq4_portfolio_diversity.yaml"
 
-# submit "ex_rq4_full_s1997"         "$RQ4 --menu full --seeds 1997"
-# submit "ex_rq4_models_only_s1997"  "$RQ4 --menu models_only --seeds 1997"
-# submit "ex_rq4_single_model_s1997" "$RQ4 --menu single_model --seeds 1997"
-# submit "ex_rq4_small_s1997"        "$RQ4 --menu small --seeds 1997"
+# submit "ex_rq4_full_s42"         "$RQ4 --menu full --seeds 42"
+# submit "ex_rq4_models_only_s42"  "$RQ4 --menu models_only --seeds 42"
+# submit "ex_rq4_single_model_s42" "$RQ4 --menu single_model --seeds 42"
+# submit "ex_rq4_small_s42"        "$RQ4 --menu small --seeds 42"
 
 # =============================================================================
 # RQ6 -- Equilibrium gap and generalization to unseen best-responses
@@ -99,6 +99,6 @@ RQ4="$BASE --experiment configs/experiments/paper/rq4_portfolio_diversity.yaml"
 
 RQ6="$BASE --experiment configs/experiments/paper/rq6_equilibrium_gap.yaml"
 
-# submit "ex_rq6_mm_s1997"  "$RQ6 --selector minimax --seeds 1997"
-# submit "ex_rq6_val_s1997" "$RQ6 --selector validation --seeds 1997"
-# submit "ex_rq6_uni_s1997" "$RQ6 --selector uniform --seeds 1997"
+# submit "ex_rq6_mm_s42"  "$RQ6 --selector minimax --seeds 42"
+# submit "ex_rq6_val_s42" "$RQ6 --selector validation --seeds 42"
+# submit "ex_rq6_uni_s42" "$RQ6 --selector uniform --seeds 42"

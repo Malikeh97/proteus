@@ -1,0 +1,18 @@
+# Qwen3Guard, input stage, with the Controversial band blocked. Identical to
+# qwen3guard_in.yaml on every axis except where the decision boundary sits:
+# Qwen3Guard emits Safe / Unsafe / Controversial, and this variant refuses the
+# middle class (Qwen3Guard._is_unsafe reads params.block_controversial).
+#
+# The point is not that it is *safer* -- it trades helpfulness for coverage on the
+# ambiguous band, so it should land at comparable aggregate risk with a different
+# false-negative set. That makes it the BOUNDARY axis of the menu: same mechanism,
+# same stage, same weights, shifted threshold. Phase 1 measures whether the trade
+# is really neutral; scripts/audit_menu.py is what checks it.
+wrapper_id: "qwen3guard_in_strict"
+type: "qwen3guard"
+stage: "input"
+hf_name: "Qwen/Qwen3Guard-Gen-4B"
+params_b: 4.02
+quantization: "4bit"
+params:
+  block_controversial: true

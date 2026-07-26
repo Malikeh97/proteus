@@ -1,0 +1,12 @@
+# ShieldGemma, INPUT stage only. Shares weights with shieldgemma_out.yaml.
+# Different PROVENANCE from the Qwen guards (Google, different training data and
+# policy taxonomy), which is the axis this pair contributes: whatever
+# decorrelation exists between guard families is only exploitable by *mixing*
+# over them, not by stacking them -- stacking correlated guards adds cost and
+# false refusals for little marginal safety.
+wrapper_id: "shieldgemma_in"
+type: "shieldgemma"
+stage: "input"
+hf_name: "google/shieldgemma-2b"
+params_b: 2.61
+quantization: "4bit"

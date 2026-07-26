@@ -1,0 +1,14 @@
+# Qwen3Guard, INPUT stage only. Same weights as qwen3guard.yaml (the guard cache
+# in wrappers/guards.py is keyed on hf_name, so the stage-split variants share one
+# loaded copy -- no extra VRAM). Screens the request and never sees the response:
+# its blind spot is anything that reads benign going in but comes back harmful.
+# Paired with qwen3guard_out.yaml, this is the intervention-STAGE axis: same
+# classifier, same strength, complementary failure modes.
+wrapper_id: "qwen3guard_in"
+type: "qwen3guard"
+stage: "input"
+hf_name: "Qwen/Qwen3Guard-Gen-4B"
+params_b: 4.02
+quantization: "4bit"
+params:
+  block_controversial: false

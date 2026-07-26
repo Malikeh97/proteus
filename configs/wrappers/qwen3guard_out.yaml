@@ -1,0 +1,13 @@
+# Qwen3Guard, OUTPUT stage only. Shares weights with qwen3guard_in.yaml.
+# Lets every prompt reach the model and screens what comes back, so obfuscated
+# or encoded requests that slip past an input classifier are still caught on the
+# way out. The mirror image of qwen3guard_in's blind spot; costs a full
+# generation per blocked request, which input-stage screening saves.
+wrapper_id: "qwen3guard_out"
+type: "qwen3guard"
+stage: "output"
+hf_name: "Qwen/Qwen3Guard-Gen-4B"
+params_b: 4.02
+quantization: "4bit"
+params:
+  block_controversial: false

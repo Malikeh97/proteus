@@ -1,0 +1,10 @@
+# ShieldGemma, OUTPUT stage only. Shares weights with shieldgemma_in.yaml.
+# ShieldGemma._render has a separate response-scoring template, so the output
+# stage asks the policy question about the chatbot reply rather than the user
+# prompt -- a genuinely different classification problem, not the same call moved.
+wrapper_id: "shieldgemma_out"
+type: "shieldgemma"
+stage: "output"
+hf_name: "google/shieldgemma-2b"
+params_b: 2.61
+quantization: "4bit"

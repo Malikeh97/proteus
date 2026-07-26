@@ -1,0 +1,52 @@
+# PRESERVED VERBATIM from the original full.yaml (only menu_id changed), because it
+# is the contrast arm, not dead config. `full` is now an ISO-SAFETY menu; this one
+# is the CAPABILITY/SAFETY GRADIENT, and the pair is a clean RQ4 ablation:
+#
+#   Against a static attacker, ASR under coverage c is ~ sum_q c_q JB_q, so
+#   `deterministic` scores min_q JB_q and any mixture scores a convex combination
+#   of the JB_q -- never lower. The price a mixture pays is therefore exactly the
+#   SPREAD of JB_q across the menu, and a gradient maximises that spread. Running
+#   the same selectors over `full` and `gradient` measures that price directly.
+#
+# Expect this menu to (a) show a large iso-safety spread, (b) contain domination
+# pairs -- qwen3_4b+[qwen3guard] vs qwen3_4b+[keyword_filter|qwen3guard] is nested
+# by construction, since keyword_filter is refusal-only and can only shrink the
+# blind set -- and (c) drive minimax toward a vertex. scripts/audit_menu.py reports
+# all three; that is the point of keeping it.
+#
+# --- original header follows ---
+# The Sec. 4 resource menu, curated for a JAILBREAK threat model. A capability/
+# safety gradient in which every member is safe on its own: the strong qwen3-8b is
+# always guarded; qwen3-4b is always guarded; only the safety-aligned
+# qwen3-4b-saferl is allowed guard-free; the weak qwen2.5-3b always carries a
+# both-stage safety guard.
+#
+# Multi-wrapper configs are COMPLEMENTARY-ONLY: no member stacks the two general-
+# purpose safety guards (qwen3guard + shieldgemma) -- their errors correlate, so a
+# second general guard adds cost and false-refusals for little marginal safety.
+# When a config carries two wrappers, the second always adds a DIFFERENT axis: a
+# lexical blocklist (keyword_filter) or an input transform (safety_prompt /
+# smoothllm -- smoothllm also perturbs the served text so an adaptive attacker's
+# target is non-stationary). The prompt-injection detector (piguard) is left out:
+# it screens a different threat model that is not the current focus. It remains in
+# the wrapper library and can be re-added. qwen3guard/shieldgemma run at stage
+# "both" -- a single guard already screens input AND output. |Q| = 13.
+menu_id: "gradient"
+configs:
+  # --- strong model, always guarded (riskiest knowledge -> richest defense) ---
+  # - {model: qwen3_8b,        wrappers: [qwen3guard]}                  # single both-stage guard (family A)
+  # - {model: qwen3_8b,        wrappers: [shieldgemma]}                 # single both-stage guard (family B)
+  # - {model: qwen3_8b,        wrappers: [qwen3guard, smoothllm]}       # guard + perturbation
+  # --- mid model, always guarded ---
+  - {model: qwen3_4b,        wrappers: [qwen3guard]}                  # single both-stage guard
+  - {model: qwen3_4b,        wrappers: [shieldgemma, safety_prompt]}  # guard + preamble transform
+  - {model: qwen3_4b,        wrappers: [keyword_filter, qwen3guard]}  # lexical blocklist + semantic guard
+  # --- safety-aligned model: the only guard-free members allowed ---
+  - {model: qwen3_4b_saferl, wrappers: []}
+  - {model: qwen3_4b_saferl, wrappers: [safety_prompt]}              # preamble only
+  - {model: qwen3_4b_saferl, wrappers: [qwen3guard]}                 # single guard
+  # # --- weak model: always a both-stage safety guard (safe-anchor tier) ---
+  # - {model: qwen2.5_3b,      wrappers: [qwen3guard]}                  # single guard
+  # - {model: qwen2.5_3b,      wrappers: [shieldgemma, smoothllm]}      # guard (family B) + perturbation
+  # - {model: qwen2.5_3b,      wrappers: [keyword_filter, qwen3guard]}  # lexical blocklist + semantic guard
+  # - {model: qwen2.5_3b,      wrappers: [qwen3guard, safety_prompt]}   # guard + preamble transform
