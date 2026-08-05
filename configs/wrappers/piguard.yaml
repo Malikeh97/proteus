@@ -6,3 +6,7 @@ stage: "input"
 hf_name: "leolee99/PIGuard"
 params_b: 0.18
 quantization: "none"
+# The only entry on the menu without a native transformers implementation: the
+# repo ships its own DeBERTa-based classifier class, so it cannot load without
+# executing repo code. Everything else stays on the default (false).
+trust_remote_code: true

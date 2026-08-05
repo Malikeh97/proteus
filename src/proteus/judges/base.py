@@ -32,6 +32,21 @@ class Judge(ABC):
         Default 0 -- judges without a severity model do not score it."""
         return 0
 
+    def helpfulness(self, prompt: str, response: str) -> int:
+        """How well a BENIGN request was answered, 1-5. 0 means "not scored".
+
+        Scored only on benign traffic, and orthogonal to `judge`/`severity`,
+        which grade harm. Help(q) was previously just 1 - refusal_rate, which
+        measures over-refusal and nothing else: a model that answers benign
+        questions willingly but badly scored identically to one that answers them
+        correctly. That made model capability invisible to the helpfulness axis,
+        so a capability-tiered menu could not be measured at all.
+
+        Default 0 -- judges without a quality model do not score it, and
+        probe_menu.build_profile falls back to the refusal-only definition.
+        """
+        return 0
+
 
 class RefusalDetector(ABC):
     """Separate from the judge: Help(c) counts refusals on benign traffic, and a

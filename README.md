@@ -64,13 +64,13 @@ For the GRPO attacker (a stub today), add the extra: `uv sync --extra rl`.
 
 ### 2. HuggingFace token
 
-Gated models — `Llama-3.1-8B-Instruct` (the judge) and `ShieldGemma` — need a token. Create `.env` in the project root:
+Gated models — `ShieldGemma`, and `Llama-3.1-8B-Instruct` if you use the alternative judge — need a token. The default judge, `Flow-Judge-v0.1`, is ungated. Create `.env` in the project root:
 
 ```bash
 echo 'HF_TOKEN=hf_your_token_here' > .env
 ```
 
-`.env` is gitignored. `start_env.sh` sources it automatically. Request access to the gated repos on HuggingFace first, or the judge will fail to load at Phase 1.
+`.env` is gitignored. `start_env.sh` sources it automatically. Request access to the gated repos on HuggingFace first, or the wrappers will fail to load at Phase 1.
 
 ### 3. What `start_env.sh` does
 
@@ -105,9 +105,13 @@ Killarney and Fir, as configured. Adding another cluster means one hostname bran
 |---|---|---|
 | Qwen3-8B / Qwen3-4B / Qwen2.5-3B / Qwen3-4B-SafeRL | served menu | ~12.0 GB |
 | Qwen3Guard-4B / ShieldGemma-2b / PIGuard | wrappers | ~ 4.7 GB |
-| Llama-3.1-8B-Instruct | judge | ~ 5.0 GB |
+| Flow-Judge-v0.1 (bf16, unquantised) | judge | ~ 7.6 GB |
 | Olmo-3-7B-Instruct | attacker | ~ 4.0 GB |
-| | **total** | **~25.7 GB** |
+| | **total** | **~28.3 GB** |
+
+The judge is the one component that does **not** load at 4-bit. It is 3.8B, so bf16
+costs ~7.6 GB, and judge fidelity is what every reported number rests on — a
+quantised judge that mislabels refusals biases the whole comparison.
 
 ---
 
@@ -118,7 +122,7 @@ Four phases. Phases 1–2 need a GPU and are submitted with `submit`; phases 3�
 | Phase | Script | Launcher | What the launcher does | GPU | Produces |
 |---|---|---|---|---|---|
 | 0 | `inspect_menu.py` | — | — | no | The menu `Q`, printed. No weights loaded. |
-| 1 | `probe_menu.py` | `run_probe.sh` | Submits GPU jobs that probe the menu, one per (menu, seed), measuring the payoffs every selector optimizes over. Uncomment the menu blocks (dev/full/small/ablation) you want. | yes | `J(q,x)` and `Help(q)` per configuration → `profile.json` |
+| 1 | `probe_menu.py` | `run_probe.sh` | Submits GPU jobs that probe the menu, **one per (model, seed)** so the menu runs concurrently, measuring the payoffs every selector optimizes over. Uncomment the menu blocks (dev/full/small/ablation) you want. | yes | `J(q,x)` and `Help(q)` per configuration → `profile.json` |
 | 1.5 | `audit_menu.py` | — | **Gate.** Reads `profile.json` and decides whether Phase 2 *can* be informative on this menu: `JB_q` spread, dominated members, blind-spot overlap, irreducible ASR floor, and best-deterministic vs. best-mixture headroom. Exit 1 on failure. Seconds, no GPU. | no | a PASS/FAIL report |
 | 2 | `run_game.py` | `run_experiments.sh` | Submits GPU jobs that commit coverages and run adaptive attacks against them, one per research-question condition. Run only after Phase 1 finishes; uncomment the RQ blocks you want. | yes | Committed coverages + adaptive attack records |
 | 3 | `evaluate.py` | `run_analysis.sh` | Runs both post-processing phases on the login node: aggregates the Phase 2 records into metrics, then renders the plots. No GPU or submission. | no | `metrics.csv` |
@@ -383,8 +387,9 @@ Coverage entropy is the measurement most capable of falsifying the framework: `H
 $PROTEUS_OUTPUT_DIR/
 ├── {menu}/
 │   ├── profile/{seed}/
-│   │   ├── probe.jsonl                                  Phase 1 trials
-│   │   └── profile.json                                 J(q,x), Help(q)
+│   │   ├── shards/{qid}.jsonl                           Phase 1 trials, one file per configuration
+│   │   ├── shards/{qid}.done                            that configuration is fully probed
+│   │   └── profile.json                                 J(q,x), Help(q), merged once every shard is done
 │   └── {selector}/{attacker}/tau{tau}/{seed}/
 │       ├── coverages.json                               committed c_t per round
 │       ├── round{t}/results.jsonl                       Phase 2 trials

@@ -1,0 +1,18 @@
+# The low-knowledge end of the `frontier` menu. Paired against qwen3-14b: small
+# enough that its answers to benign requests are measurably worse, which is what
+# gives the menu a real helpfulness spread instead of one manufactured by guard
+# false-refusals.
+#
+# Note this is a capability floor, not a safety anchor -- it is not safety-tuned,
+# so it carries a guard in every menu member it appears in.
+model_id: "qwen2.5-1.5b-instruct"
+backend: "huggingface"
+hf_name: "Qwen/Qwen2.5-1.5B-Instruct"
+params_b: 1.54
+model_type: "instruct"
+quantization: "4bit"
+generation:
+  max_new_tokens: 256
+  temperature: 0.7
+  top_p: 0.9
+  do_sample: true

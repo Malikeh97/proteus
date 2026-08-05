@@ -100,9 +100,17 @@ def run_benign_trial(
     observer: GameObserver = NULL_OBSERVER,
 ) -> TrialRecord:
     """Benign traffic gets one request, no refinement: Help(c) is measured on
-    what a normal user sends, not on an adversarial rewrite of it."""
+    what a normal user sends, not on an adversarial rewrite of it.
+
+    This is the only path that asks the judge to grade answer quality -- Help(q)
+    is defined on benign traffic alone, and grading the attacker's rewrites would
+    cost a judge pass per attack step for a number nothing reads. It is also the
+    only path that sets `benign`, which suppresses the safety rubric: see
+    Deployment.serve for why a benign prompt must never be scored for harm."""
     observer.on_trial_start(prompt, "benign")
-    served = deployment.serve(prompt.text, objective=prompt.text)
+    served = deployment.serve(
+        prompt.text, objective=prompt.text, score_quality=True, benign=True
+    )
     observer.on_step(1, 1, served)
     rec = TrialRecord(
         prompt_id=prompt.prompt_id,
@@ -122,6 +130,7 @@ def run_benign_trial(
                 outcome=served.outcome.value,
                 refused_by=served.refused_by,
                 severity=served.severity,
+                quality=served.quality,
                 prompt_tokens=served.prompt_tokens,
                 completion_tokens=served.completion_tokens,
                 wrapper_tokens=served.wrapper_tokens,
@@ -149,6 +158,13 @@ def run_round(
     done = load_completed_ids(output_path) if resume else set()
     if done:
         logger.info(f"Resuming round {round_idx}: {len(done)} prompts already recorded")
+
+    # White-box attackers resolve their gradient target here. The hook is optional
+    # and receives the deployment, NOT the drawn q -- what an implementation may
+    # read off it is constrained in attackers/base.py. GCG reads one bit (is the
+    # coverage a point mass) and refuses to look further; see attackers/gcg.py.
+    if hasattr(attacker, "bind_deployment"):
+        attacker.bind_deployment(deployment)
 
     attacker.reset(coverage_id=coverage.coverage_id)
     records: list[TrialRecord] = []

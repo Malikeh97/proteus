@@ -9,7 +9,7 @@ from proteus.utils.registry import Registry
 ATTACKERS: Registry[Attacker] = Registry("attacker")
 
 # Registration side effects; must follow ATTACKERS.
-from proteus.attackers import grpo, pair, search, static  # noqa: E402,F401
+from proteus.attackers import gcg, grpo, pair, search, static  # noqa: E402,F401
 
 
 def load_attacker(config: AttackerConfig, configs_dir: str | Path = CONFIGS_DIR) -> Attacker:

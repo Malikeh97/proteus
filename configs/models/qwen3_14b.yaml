@@ -1,0 +1,17 @@
+# The capability end of the `frontier` menu: a stand-in for a frontier-tier model
+# whose knowledge is worth serving and worth defending. The largest model in the
+# tree, deliberately paired against qwen2.5-1.5b so the knowledge gap is large
+# enough to show up on the Flow-Judge helpfulness rubric rather than being lost in
+# noise.
+model_id: "qwen3-14b"
+backend: "huggingface"
+hf_name: "Qwen/Qwen3-14B"
+params_b: 14.8
+model_type: "instruct"
+quantization: "4bit"
+enable_thinking: false
+generation:
+  max_new_tokens: 256
+  temperature: 0.7
+  top_p: 0.9
+  do_sample: true

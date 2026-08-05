@@ -1,0 +1,17 @@
+# MVP menu -- the smallest thing that exercises the whole pipeline end to end.
+# Three bare models, NO wrappers, so the first numbers isolate the model axis
+# before any defense mechanism is layered on. |Q| = 3.
+#
+# The members span provenance and alignment at a comparable scale:
+#   qwen3.5-9b       capable tier, general instruct (text tower of a multimodal ckpt)
+#   qwen3-4b-saferl  safety-RL-tuned Qwen at 4B -- the aligned/cautious end
+#   gemma3-4b        different lineage (Google) at 4B, general instruct
+#
+# All three are text-mode instruct; see each model config for how text inference is
+# resolved from the (two multimodal) checkpoints. Wrappers come later -- once these
+# baselines read sensibly, add screened variants the way frontier.yaml does.
+menu_id: "mvp"
+configs:
+  - {model: qwen3.5_9b,     wrappers: []}   # capable tier, general instruct
+  - {model: qwen3_4b_saferl, wrappers: []}  # safety-RL aligned, cautious end
+  - {model: gemma3_4b,      wrappers: []}   # different provenance, general instruct

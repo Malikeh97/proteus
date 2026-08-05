@@ -4,6 +4,14 @@ The menu is not a list of things to try. Its structure determines, before any Ph
 compute is spent, whether the central claim *can* come out true. This note records the
 argument, the design rule that follows, and the audit that enforces it.
 
+> **Two menus, two questions.** Most of this note derives the *iso-safety* menu
+> (`configs/menus/full.yaml`) and concludes that a capability gradient is the worst possible
+> shape to randomise over. That conclusion is correct **for the pure-ASR question at a `tau`
+> that barely binds**. It does not carry over to the risk–helpfulness frontier, where a
+> gradient is the *right* shape — see [The frontier question](#the-frontier-question-why-a-gradient-is-correct-there)
+> at the end, which derives `configs/menus/frontier.yaml`. Read that section before
+> concluding the two menus contradict each other.
+
 ## The arithmetic
 
 Against a static attacker, ASR under coverage `c` on a fixed prompt set is approximately
@@ -160,3 +168,98 @@ decision boundary mechanically rather than hoping two independent training runs 
 Two members are most at risk of failing check 1: `qwen3_4b_saferl+smoothllm` (no classifier
 at all) and `qwen3_4b+qwen3guard_in_strict` (the strict dial may cost more Help than it buys
 in safety). If they fail, cut or re-pair them rather than proceeding.
+
+---
+
+## The frontier question: why a gradient is correct *there*
+
+Everything above optimises one number, ASR, and treats `tau` as a side constraint that
+barely binds. Change the objective to the **risk–helpfulness frontier** and the conclusion
+inverts: the gradient stops being the worst menu and becomes the only one that works.
+
+### The hull argument
+
+Against a static attacker both payoffs are linear in `c`:
+
+```
+ASR(c)  = sum_q c_q * JB_q          Help(c) = sum_q c_q * Help_q
+```
+
+So the achievable set is the **convex hull** of the `|Q|` points `(Help_q, JB_q)`. A point
+mass is stuck at a vertex of that hull; a mixture reaches anywhere inside it. Under the
+floor `Help >= tau`:
+
+| | is restricted to |
+|---|---|
+| `deterministic` | `min JB_q` over `{q : Help_q >= tau}` — a **vertex** |
+| a mixture | `min sum_q c_q JB_q` over `{c : c · help >= tau}` — the **hull** |
+
+Worked, with `A = (Help 0.9, JB 0.8)` and `B = (Help 0.4, JB 0.1)` at `tau = 0.7`:
+`deterministic` can only take `A`, scoring **0.80**. The mixture `c = (0.6, 0.4)` sits at
+`Help = 0.70` exactly and scores **0.52**. The mixture strictly wins.
+
+**This needs no adaptation penalty.** It holds against a *static* attacker, purely from
+frontier interpolation — which is exactly what the iso-safety menu cannot deliver, since
+there the whole argument rests on the attacker paying for non-stationarity. Whenever `tau`
+falls strictly between two adjacent `Help_q` on the hull, the deterministic baseline must
+overshoot to the next vertex up and pays the entire gap.
+
+The two designs are therefore answering different questions, and neither supersedes the
+other:
+
+| | `full` (iso-safety) | `frontier` (capability-tiered) |
+|---|---|---|
+| objective | ASR at fixed, barely-binding `tau` | the (Help, ASR) frontier, `tau` binding |
+| menu shape | anti-chain: equal safety, non-nested blind spots | monotone chain in **both** payoffs |
+| why mixing wins | dilution ~ 0, so any adaptation penalty suffices | interpolation reaches non-vertex points |
+| needs an adaptive attacker | **yes** | no |
+| spread of `JB_q` | must be small (it is the price) | large by construction, and paid for in Help |
+
+### Help must be quality-weighted, or the gradient is invisible
+
+`Help(q)` was originally `1 - refusal_rate` on benign traffic — a pure **over-refusal**
+measure. Under it, a 1.5B model that answers benign questions willingly but badly scores
+`Help = 1.0`, identical to a 14B model that answers them correctly. The capability axis
+simply does not exist, and a capability-tiered menu collapses into "how aggressively does
+each guard over-refuse".
+
+`scripts/probe_menu.py` now computes
+
+```
+Help(q) = mean over benign x of:   0.0            if refused
+                                   quality / 5    otherwise
+```
+
+where `quality` is the 1–5 answer-quality grade from the Flow-Judge helpfulness rubric
+(`src/proteus/judges/flow_judge.py`). Refusals stay in the denominator, so over-refusal
+still costs — a configuration cannot raise its score by refusing more. Judges that do not
+score quality fall back to the old definition, which keeps the `keyword` judge, the `dev`
+menu, and every pre-existing `profile.json` working. **That fallback is silent**, so a
+`frontier` probe run with the wrong judge produces a flat, meaningless Help column rather
+than an error.
+
+### Reading the audit on a gradient menu
+
+`scripts/audit_menu.py` was written to enforce the iso-safety design, so on `frontier`
+**checks 1 (spread) and 2 (anti-chain) are expected to fail** — that is the menu working as
+intended, not a defect. Relax the threshold and read check 5:
+
+```bash
+python scripts/audit_menu.py --menu frontier --seed 42 --tau <chosen> --max-spread 1.0
+```
+
+Check 5 already computes the right quantity: `dilution = mixture_average -
+deterministic_average`, both under the `tau` constraint. On `full` it is **positive** — the
+handicap Phase 2 must overcome. On `frontier` it should be **negative**, and that negative
+number *is* the result, available before spending an allocation on Phase 2.
+
+### One caveat that will shape the reading
+
+Only `minimax` can exploit this menu. Per `docs/selectors.md` it is the sole selector
+treating `tau` as a constraint on the *mixture* (`c · help >= tau`); `uniform`, `validation`
+and `reasoner` all go through `Selector._feasible_mask()`, which restricts the **support** to
+individually-feasible members. At a `tau` above the small model's `Help`, that mask deletes
+the safe members outright, so those three collapse onto the capable end and look like
+`deterministic`. This is a genuine property for `deterministic` — a point mass cannot
+interpolate — but an **implementation artifact** for `uniform`/`validation`. Do not report
+it as evidence that only clever randomisation helps.

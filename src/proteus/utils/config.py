@@ -34,7 +34,17 @@ class ModelConfig(BaseModel):
     params_b: float | None = None  # billions, for FLOP accounting
     model_type: Literal["base", "instruct"] = "instruct"
     quantization: Literal["4bit", "8bit", "none"] = "4bit"
+    # Compute dtype. float16 is the historical default for the served menu; set
+    # bfloat16 for models whose card specifies it (Phi-3 overflows in fp16).
+    torch_dtype: Literal["float16", "bfloat16", "float32"] = "float16"
     device: str = "cuda"
+    # Off by default: every model on the menu has a native transformers
+    # implementation, and a repo's vendored modeling_*.py is pinned to whatever
+    # transformers was current when it was uploaded. Flow-Judge's auto_map points
+    # at microsoft/Phi-3.5-mini-instruct's 2024 code, which calls the long-removed
+    # DynamicCache.seen_tokens and dies at the first generate(). Only enable for a
+    # genuinely novel architecture transformers does not yet ship.
+    trust_remote_code: bool = False
     enable_thinking: bool = False  # Qwen3 chat-template switch
     generation: GenerationConfig = Field(default_factory=GenerationConfig)
     extra: dict[str, Any] = Field(default_factory=dict)
@@ -51,6 +61,7 @@ class WrapperConfig(BaseModel):
     params_b: float | None = None
     quantization: Literal["4bit", "8bit", "none"] = "4bit"
     device: str = "cuda"
+    trust_remote_code: bool = False  # see ModelConfig.trust_remote_code
     threshold: float = 0.5
     params: dict[str, Any] = Field(default_factory=dict)
 

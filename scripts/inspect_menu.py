@@ -16,6 +16,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import logging
 import sys
 from pathlib import Path
 
@@ -30,6 +31,11 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--configs-dir", default="configs")
     p.add_argument("--verbose", action="store_true", help="Show hf_name and params per config")
     p.add_argument("--list-registries", action="store_true", help="List every registered component")
+    p.add_argument(
+        "--list-models",
+        action="store_true",
+        help="Print one model_id per line and exit -- the shard key run_probe.sh submits on",
+    )
     return p.parse_args()
 
 
@@ -57,6 +63,16 @@ def main() -> None:
 
     if args.list_registries:
         list_registries()
+        return
+
+    if args.list_models:
+        # Machine-readable, nothing else on stdout: run_probe.sh reads this to fan
+        # the probe out over models, so the launcher never duplicates the menu YAML.
+        # ResourceMenu logs its shape to stdout on construction, so quieten it first.
+        logging.getLogger("menu").setLevel(logging.WARNING)
+        menu = ResourceMenu.from_name(args.menu, args.configs_dir)
+        seen = dict.fromkeys(menu.describe(q)["model_id"] for q in menu.qids)
+        print("\n".join(seen))
         return
 
     menu = ResourceMenu.from_name(args.menu, args.configs_dir)

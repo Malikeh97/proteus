@@ -1,0 +1,32 @@
+# Gemma-3-4B-IT, served member of the MVP menu (configs/menus/mvp.yaml). A
+# different pretraining lineage from Qwen at the same 4B scale.
+#
+# This is the SERVED config (temperature 0.7). The existing gemma3_4b_attacker.yaml
+# points at the same checkpoint but with attacker generation settings (temp 1.0);
+# keep them separate so a served member and an attacker never share a config.
+#
+# TEXT MODE. The checkpoint is multimodal (model_type "gemma3", architecture
+# Gemma3ForConditionalGeneration, text+vision). Unlike Qwen3.5, gemma3's causal-LM
+# auto-map keeps the FULL class:
+#     gemma3 -> Gemma3ForConditionalGeneration
+# so AutoModelForCausalLM loads the whole model and text-only prompts go down the
+# language tower with a ~0.4B SigLIP vision tower resident but idle. Text inference
+# is correct; it just costs a little VRAM. model_type below is the chat-vs-base
+# switch (instruct), not a modality flag.
+#
+# bfloat16, NOT the float16 default: Gemma 3 was trained in bf16 and its
+# activations overflow in fp16 (same reason gemma3_12b sets it). Gemma has no
+# thinking-mode switch; HFModel passing enable_thinking to the template is caught
+# and retried without it, so this is harmless.
+model_id: "gemma3-4b"
+backend: "huggingface"
+hf_name: "google/gemma-3-4b-it"
+params_b: 4.30
+model_type: "instruct"
+quantization: "4bit"
+torch_dtype: "bfloat16"
+generation:
+  max_new_tokens: 256
+  temperature: 0.7
+  top_p: 0.9
+  do_sample: true

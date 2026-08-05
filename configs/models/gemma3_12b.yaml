@@ -1,0 +1,26 @@
+# Gemma-3-12B-IT. Candidate for the capable tier of the `frontier` menu -- a
+# different pretraining lineage from Qwen at a comparable size, so a menu can
+# vary provenance without also varying capability.
+#
+# bfloat16, NOT the float16 default: Gemma 3 was trained in bf16 and its
+# activations overflow in fp16 (same reason the Phi-3 note in utils/config.py
+# gives). L40S is Ada and does bf16 natively, so this costs nothing.
+#
+# Gated on the Hub -- needs HF_TOKEN in .env and a one-time licence acceptance
+# at https://huggingface.co/google/gemma-3-12b-it before the first download.
+#
+# The checkpoint is multimodal (Gemma3ForConditionalGeneration). AutoModelForCausalLM
+# resolves to it, and text-only prompts go down the language tower, so HFModel
+# needs no change -- but the ~0.4B SigLIP vision tower is loaded and idle.
+model_id: "gemma3-12b"
+backend: "huggingface"
+hf_name: "google/gemma-3-12b-it"
+params_b: 12.2
+model_type: "instruct"
+quantization: "4bit"
+torch_dtype: "bfloat16"
+generation:
+  max_new_tokens: 256
+  temperature: 0.7
+  top_p: 0.9
+  do_sample: true

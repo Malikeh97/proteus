@@ -1,0 +1,67 @@
+# The CAPABILITY-TIERED menu: a deliberate monotone chain in BOTH payoffs, built
+# to test whether randomisation buys a better point on the risk-helpfulness
+# frontier. |Q| = 4.
+#
+# THIS IS A GRADIENT ON PURPOSE. It does not follow the substitution rule that
+# governs configs/menus/full.yaml, and that is not an oversight -- it answers a
+# different question. See docs/menu-design.md, "Two menus, two questions".
+#
+# WHY A CHAIN IS THE RIGHT SHAPE HERE
+# -----------------------------------
+# Against a static attacker both payoffs are linear in c:
+#
+#     ASR(c)  = sum_q c_q JB_q          Help(c) = sum_q c_q Help_q
+#
+# so the achievable set is the CONVEX HULL of the four points (Help_q, JB_q). A
+# point mass is stuck at a vertex; a mixture reaches anywhere inside. Under the
+# floor Help >= tau:
+#
+#     deterministic  ->  min JB_q over {q : Help_q >= tau}        -- a VERTEX
+#     a mixture      ->  min sum_q c_q JB_q over {c : c.help >= tau}  -- the HULL
+#
+# Worked: A = (Help 0.9, JB 0.8), B = (Help 0.4, JB 0.1), tau = 0.7. Deterministic
+# can only take A and scores 0.80. The mixture c = (0.6, 0.4) sits at Help = 0.70
+# exactly and scores 0.52. The mixture strictly wins.
+#
+# This is the point the iso-safety menu cannot reach: the win needs NO adaptation
+# penalty. It holds against a static attacker, purely from frontier interpolation.
+# Whenever tau falls strictly between two adjacent Help_q on the hull, the
+# deterministic baseline must overshoot to the next vertex up and pays the whole
+# gap. |Q| = 4 gives three such interior gaps.
+#
+# THE MEMBERS -- capability tier x screening strength, varied together
+# --------------------------------------------------------------------
+#   1  the frontier stand-in, unguarded. Maximum Help, maximum JB. This is the
+#      member a helpfulness floor forces the deterministic baseline onto.
+#   2  same knowledge, screened. Buys safety at the cost of guard false-refusals.
+#   3  low knowledge, screened. Cheap and safe, and genuinely worse at answering.
+#   4  the safe anchor: low knowledge and the strict boundary (Controversial
+#      blocked). Least helpful, least risky corner of the hull.
+#
+# HELP MUST BE QUALITY-WEIGHTED FOR THIS MENU TO MEAN ANYTHING. Under the old
+# Help = 1 - refusal_rate, members 1 and 3 both score ~1.0 -- a small model that
+# answers benign questions willingly but badly is indistinguishable from a large
+# one that answers them correctly, and the entire capability axis vanishes. The
+# Flow-Judge helpfulness rubric (judges/flow_judge.py) is what makes the tiering
+# visible; probe_menu.build_profile falls back to the old definition for any judge
+# that does not score quality, which would silently flatten this menu.
+#
+# VRAM: 14B (~8.5 GB) + 1.5B (~1.2 GB) + Qwen3Guard-4B (~2.7 GB, ONE copy shared
+# by qwen3guard and qwen3guard_strict via the hf_name-keyed cache) + Flow-Judge in
+# bf16 (7.6 GB) + Olmo attacker (~4 GB) ~ 24 GB of a 48 GB L40S.
+#
+# BEFORE PHASE 2, audit it -- but read the audit differently from the iso-safety
+# menu. Checks 1 (spread) and 2 (anti-chain) are EXPECTED to fail here, by design:
+#     python scripts/audit_menu.py --menu frontier --seed 42 --tau <t> --max-spread 1.0
+# The number that matters is check 5's `dilution`, the tau-constrained
+# mixture-minus-deterministic average. On `full` it is positive (the handicap
+# Phase 2 must overcome). On THIS menu it should be NEGATIVE -- and that negative
+# value is the result, available before spending an allocation on Phase 2.
+menu_id: "frontier"
+configs:
+  # --- capable tier: the knowledge worth serving ---
+  - {model: qwen3_14b,     wrappers: []}                     # unguarded: Help high,   JB high
+  - {model: qwen3_14b,     wrappers: [qwen3guard]}           # screened:  Help mid-hi, JB mid
+  # --- low-knowledge tier: cheap, safe, and measurably worse at answering ---
+  - {model: qwen2.5_1.5b,  wrappers: [qwen3guard]}           # screened:  Help low,    JB low
+  - {model: qwen2.5_1.5b,  wrappers: [qwen3guard_strict]}    # anchor:    Help lowest, JB lowest

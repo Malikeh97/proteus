@@ -1,0 +1,14 @@
+# The security-game solve against severity-weighted harm rather than a binary
+# break indicator: t bounds max_x sum_q c_q S(q, x).
+#
+# A separate config rather than a flag on `minimax`, so the binary condition every
+# published number was produced under stays byte-identical and the two are
+# directly comparable as conditions in the same experiment.
+#
+# Requires a judge that grades severity (configs/judges/flow_judge.yaml). Under
+# any other judge S is all zero and the selector falls back to binary J with a
+# warning, making this an exact duplicate of `minimax`.
+selector_id: "minimax_graded"
+type: "minimax"
+params:
+  graded: true

@@ -2,16 +2,20 @@
 # so a run's identity is legible from its job name rather than from a config diff.
 name: "base"
 
-menu: "full"
+menu: "mvp"
 selector: "uniform"
 attacker: "pair"
-judge: "llama3.1_8b_judge"
+judge: "flow_judge"
 held_out_attacker: null
 
 attack_benchmark: "harmbench"
 benign_benchmark: "xstest_alpaca"
 n_attack_prompts: 100
-n_benign_prompts: 100
+# Matched to the fit split (100 x 0.3 = 30) rather than the 100 it used to be:
+# benign traffic ran unsplit against every configuration, so it was 77% of all
+# trials while contributing one scalar per configuration. Help(q)'s standard error
+# is ~9% at n=30. XSTestPlusAlpaca halves this, so it is 15 XSTest + 15 Alpaca.
+n_benign_prompts: 30
 fit_frac: 0.3
 
 rounds: 1

@@ -1,0 +1,41 @@
+# Qwen3.5-9B. The capable tier of the MVP menu (configs/menus/mvp.yaml).
+#
+# TEXT MODE -- how this is inferred, and why it is correct here.
+# The published checkpoint is MULTIMODAL: its config is model_type "qwen3_5",
+# architecture "Qwen3_5ForConditionalGeneration", with both a text_config and a
+# vision_config. But HFModel loads through AutoModelForCausalLM, and in the
+# installed transformers (5.14.1) the causal-LM auto-map sends
+#     qwen3_5 -> Qwen3_5ForCausalLM
+# i.e. the TEXT TOWER, not the conditional-generation wrapper. So the vision
+# encoder is never instantiated and we serve a pure text model -- which is what
+# this benchmark wants. (Contrast gemma3_4b, whose auto-map keeps the full
+# multimodal class and carries an idle vision tower.)
+#
+# model_type below is proteus's chat-vs-base switch (instruct here), NOT a
+# statement about modality -- do not confuse the two.
+#
+# THINKING IS ON BY DEFAULT for Qwen3.5. Left on, the model emits <think> blocks
+# and the served answer is buried in reasoning. enable_thinking: false forces the
+# non-thinking path, matching the other Qwen3 members and keeping Help/JB scored
+# on the actual answer. The Qwen3.5 chat template accepts this kwarg; HFModel
+# falls back gracefully if a future template does not.
+#
+# float16 to match the rest of the served Qwen3 menu (see utils/config.py: fp16 is
+# the historical default and Qwen3 does not overflow in it). If fp16 shows
+# instability on this checkpoint, set torch_dtype: bfloat16 -- L40S does bf16
+# natively, so it costs nothing but a little VRAM.
+#
+# MoE checkpoint: params_b is the ~9B nominal size for rough FLOP accounting; the
+# per-token ACTIVE parameter count is lower. Refine if exact active count matters.
+model_id: "qwen3.5-9b"
+backend: "huggingface"
+hf_name: "Qwen/Qwen3.5-9B"
+params_b: 9.0
+model_type: "instruct"
+quantization: "4bit"
+enable_thinking: false
+generation:
+  max_new_tokens: 256
+  temperature: 0.7
+  top_p: 0.9
+  do_sample: true

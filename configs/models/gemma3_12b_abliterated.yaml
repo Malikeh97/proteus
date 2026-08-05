@@ -1,0 +1,30 @@
+# Gemma-3-12B-IT with the refusal direction ablated ("abliterated"). Same base
+# weights and same capability tier as gemma3_12b -- the ONLY axis that moves is
+# alignment. That is what makes it useful here: a menu pairing the two isolates
+# the contribution of the model's own refusal behaviour to JB_q, with provenance,
+# size, tokenizer and chat template all held fixed.
+#
+# Expect JB_q near the ceiling and Help_q at or slightly below the aligned twin
+# (ablation is lossy -- it costs a little general capability). It is the natural
+# "least safe corner" anchor for the hull, and the member a helpfulness floor
+# alone will happily select if nothing else constrains it.
+#
+# bfloat16 for the same reason as the aligned model: Gemma 3 overflows in fp16.
+#
+# NOT gated -- mlabonne's repo downloads without a licence click, unlike
+# google/gemma-3-12b-it. HF_TOKEN is not required for this one.
+#
+# Multimodal checkpoint (Gemma3ForConditionalGeneration); AutoModelForCausalLM
+# resolves it and text-only prompts go down the language tower. See gemma3_12b.
+model_id: "gemma3-12b-abliterated"
+backend: "huggingface"
+hf_name: "mlabonne/gemma-3-12b-it-abliterated-v2"
+params_b: 12.2
+model_type: "instruct"
+quantization: "4bit"
+torch_dtype: "bfloat16"
+generation:
+  max_new_tokens: 256
+  temperature: 0.7
+  top_p: 0.9
+  do_sample: true

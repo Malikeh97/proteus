@@ -1,5 +1,5 @@
 #!/bin/bash
-# Phase 1 -- measure J(q, x) and Help(q) for every configuration in a menu.
+# Phase 1 -- measure J(q, x), S(q, x) and Help(q) for every configuration in a menu.
 # Usage: bash run_probe.sh
 # Requires: run from the project root on a klogin* (Killarney) or fir login node.
 #
@@ -7,8 +7,18 @@
 # payoffs. Uncomment the menus you want and run. Re-running is safe -- submit()
 # skips jobs that are queued, running, or completed in the last 2 days.
 #
-# One job per (menu, seed). Cost scales as |Q| x (n_fit x budget + n_benign): the
-# full menu is |Q|=8 x (50 fit prompts x 10 steps + 100 benign) = 4800 requests.
+# ONE JOB PER (MODEL, SEED), not per (menu, seed): configurations are probed
+# independently, so the menu fans out across the cluster instead of looping inside
+# one 23h allocation. Cost per job is (n_fit x budget + n_benign) x (configs on that
+# model) -- for mvp, 30 fit x 10 steps + 30 benign = 330 requests, ~3h, versus ~15h
+# for the whole menu serially. A job holding several configurations of one model
+# also loads that model once (menu/models/__init__.py caches it).
+#
+# Records go to profile/{seed}/shards/{qid}.jsonl, one file per configuration --
+# concurrent jobs must never append to a shared file. Whichever job finishes last
+# merges every shard into profile.json; if a job dies, do the merge by hand:
+#     python scripts/probe_menu.py --experiment configs/experiments/base.yaml \
+#         --menu mvp --seeds 17 --output-dir $PROTEUS_OUTPUT_DIR --build-profile-only
 #
 # AFTER these finish, audit the menu before submitting Phase 2 -- it is seconds on
 # the login node and tells you whether Phase 2 can be informative at all:
@@ -22,11 +32,45 @@ source setup/start_env.sh
 
 BASE="python scripts/probe_menu.py --output-dir $PROTEUS_OUTPUT_DIR --resume"
 
+# submit_menu <job-prefix> <experiment> <menu> <seed>...
+# One job per (model, seed). The model list comes from the menu YAML itself, so
+# this never drifts from configs/menus/.
+function submit_menu() {
+    local prefix="$1" experiment="$2" menu="$3"; shift 3
+    local models seed model job
+    models=$(python scripts/inspect_menu.py --menu "$menu" --list-models) || return 1
+    for seed in "$@"; do
+        for model in $models; do
+            # SLURM job names go into log filenames; model_ids carry '.' but nothing worse.
+            job="${prefix}_s${seed}_${model//[^A-Za-z0-9._-]/_}"
+            submit "$job" \
+                "$BASE --experiment $experiment --menu $menu --seeds $seed --model $model"
+        done
+    done
+}
+
 # =============================================================================
 # DEV -- smoke test. No guards, keyword judge, 4 prompts. Run this first.
 # =============================================================================
 
-# submit "pr_dev_s1997" "$BASE --experiment configs/experiments/dev.yaml --seeds 1997"
+# submit_menu "pr_dev" configs/experiments/dev.yaml dev 1997
+
+# =============================================================================
+# MVP MENU -- |Q| = 3. Three bare models, NO wrappers: the model axis alone,
+# before any defense mechanism is layered on. base.yaml's default menu and the
+# cheapest real run -- 3 concurrent jobs of (30 fit x 10 steps + 30 benign).
+#
+# This is also the SEVERITY GATE. FlowJudge maps rubric 3/4/5 to severity 5/8/10,
+# so S(q, x) has three distinct nonzero values and nothing guarantees the menu
+# spreads across them. Check the `Sev=` column in the probe log varies ACROSS
+# configurations before building anything on the graded objective: if every break
+# grades alike, S is a scalar multiple of J, and since the minimax LP's optimum is
+# invariant to positive scaling of its payoff matrix, `minimax_graded` is not
+# approximately but exactly `minimax`. See configs/selectors/minimax_graded.yaml.
+# =============================================================================
+
+# submit_menu "pr_mvp" configs/experiments/base.yaml mvp 1997 2
+submit_menu "pr_mvp" configs/experiments/base.yaml mvp 1990
 
 # =============================================================================
 # FULL MENU -- |Q| = 8. The ISO-SAFETY menu: members equally safe on their own,
@@ -34,9 +78,7 @@ BASE="python scripts/probe_menu.py --output-dir $PROTEUS_OUTPUT_DIR --resume"
 # boundary / alignment / mechanism class). See configs/menus/full.yaml.
 # =============================================================================
 
-# submit "pr_full_s1997" "$BASE --experiment configs/experiments/base.yaml --menu full --seeds 1997"
-# submit "pr_full_s2"    "$BASE --experiment configs/experiments/base.yaml --menu full --seeds 2"
-submit "pr_full_s42"   "$BASE --experiment configs/experiments/base.yaml --menu full --seeds 42"
+# submit_menu "pr_full" configs/experiments/base.yaml full 1997 2 42
 
 # =============================================================================
 # GRADIENT MENU -- the previous `full`, preserved verbatim. The CONTRAST ARM:
@@ -45,19 +87,30 @@ submit "pr_full_s42"   "$BASE --experiment configs/experiments/base.yaml --menu 
 # is the sharpest version of RQ4 ("does portfolio diversity matter?").
 # =============================================================================
 
-submit "pr_gradient_s2" "$BASE --experiment configs/experiments/base.yaml --menu gradient --seeds 42"
+# submit_menu "pr_gradient" configs/experiments/base.yaml gradient 42
+
+# =============================================================================
+# FRONTIER MENU -- |Q| = 4. The CAPABILITY-TIERED menu: a deliberate monotone
+# chain in both payoffs, for the risk-helpfulness frontier question (RQ3). Needs
+# the quality-weighted Help metric to mean anything -- check the Help values are
+# well separated before running Phase 2. See configs/menus/frontier.yaml.
+#
+# Audit it with the spread check relaxed; checks 1 and 2 fail here BY DESIGN:
+#   python scripts/audit_menu.py --menu frontier --seed 42 --tau <t> --max-spread 1.0
+# Check 5's `dilution` should come out NEGATIVE. That is the result.
+# =============================================================================
+
+# submit_menu "pr_frontier" configs/experiments/paper/rq3_frontier.yaml frontier 42
 
 # =============================================================================
 # SMALL MENU -- |Q| = 8. The Fallback menu.
 # =============================================================================
 
-# submit "pr_small_s1997" "$BASE --experiment configs/experiments/base.yaml --menu small --seeds 1997"
-# submit "pr_small_s2"    "$BASE --experiment configs/experiments/base.yaml --menu small --seeds 2"
-# submit "pr_small_s42"   "$BASE --experiment configs/experiments/base.yaml --menu small --seeds 42"
+# submit_menu "pr_small" configs/experiments/base.yaml small 1997 2 42
 
 # =============================================================================
 # ABLATION MENUS -- isolate the model axis vs the mechanism axis (RQ4)
 # =============================================================================
 
-submit "pr_models_only_s2"  "$BASE --experiment configs/experiments/base.yaml --menu models_only --seeds 42"
-submit "pr_single_model_s2" "$BASE --experiment configs/experiments/base.yaml --menu single_model --seeds 42"
+# submit_menu "pr_models_only"  configs/experiments/base.yaml models_only 42
+# submit_menu "pr_single_model" configs/experiments/base.yaml single_model 42

@@ -8,7 +8,7 @@ name: "rq2_static_vs_adaptive"
 menu: "full"
 selector: "uniform"
 attacker: "pair"
-judge: "llama3.1_8b_judge"
+judge: "flow_judge"
 
 attack_benchmark: "harmbench"
 benign_benchmark: "xstest_alpaca"

@@ -9,7 +9,7 @@ name: "rq4_portfolio_diversity"
 menu: "full"
 selector: "minimax"
 attacker: "pair"
-judge: "llama3.1_8b_judge"
+judge: "flow_judge"
 
 attack_benchmark: "harmbench"
 benign_benchmark: "xstest_alpaca"

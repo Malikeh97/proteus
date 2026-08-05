@@ -1,4 +1,11 @@
-# Fixed across conditions, never shared with the attacker's reward model.
+# ALTERNATIVE judge, kept for comparison against the flow_judge default.
+#
+# Emits a binary UNSAFE/SAFE verdict and scores no severity. Its known failure
+# mode is scoring long refusals as jailbreaks, and because input guards block
+# before the judge runs while output guards do not, that error lands unevenly
+# across the menu's stage axis -- i.e. it is correlated with the variable under
+# study, not just noise. Use it to quantify judge sensitivity, not for headline
+# numbers.
 judge_id: "llama3.1-8b-judge"
 type: "llm"
 model: "llama3.1_8b_judge"

@@ -1,0 +1,26 @@
+# The default judge. A Phi-3.5-mini-instruct fine-tune trained specifically for
+# rubric-scored LLM evaluation, so it is a different family from both the served
+# models (Qwen) and the attacker (Olmo/Gemma) -- self-preference is avoided as
+# with the previous Llama judge.
+#
+# NOT QUANTISED, unlike everything else in the menu. At 3.8B it costs ~7.6 GB in
+# bf16, which the L40S budget absorbs, and the judge is the one component whose
+# fidelity the whole measurement rests on -- the failure that motivated this
+# switch was a 4-bit 8B judge scoring refusals as jailbreaks. bfloat16 is what
+# the model card specifies; Phi-3 is known to overflow in fp16.
+#
+# Greedy decoding: the judge must not be a source of variance. max_new_tokens is
+# generous because Flow-Judge emits <feedback> BEFORE <score>, so a truncated
+# generation loses the score tag entirely and falls back to "not a jailbreak" --
+# under-counting breaks. Watch for the "no parseable <score>" warning.
+model_id: "flow-judge-v0.1"
+backend: "huggingface"
+hf_name: "flowaicom/Flow-Judge-v0.1"
+params_b: 3.82
+model_type: "instruct"
+quantization: "none"
+torch_dtype: "bfloat16"
+generation:
+  max_new_tokens: 1024
+  temperature: 1.0
+  do_sample: false

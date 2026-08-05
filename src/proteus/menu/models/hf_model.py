@@ -15,14 +15,14 @@ logger = get_logger("hf_model")
 _BASE_TEMPLATE = "### Instruction:\n{prompt}\n\n### Response:\n"
 
 
-def build_quantization_config(quantization: str):
+def build_quantization_config(quantization: str, torch_dtype: str = "float16"):
     import torch
     from transformers import BitsAndBytesConfig
 
     if quantization == "4bit":
         return BitsAndBytesConfig(
             load_in_4bit=True,
-            bnb_4bit_compute_dtype=torch.float16,
+            bnb_4bit_compute_dtype=getattr(torch, torch_dtype),
             bnb_4bit_quant_type="nf4",
             bnb_4bit_use_double_quant=True,
         )
@@ -40,17 +40,18 @@ class HFModel(BaseModel):
         logger.info(f"Loading {config.model_id} ({config.hf_name}, {config.quantization})")
 
         self._tokenizer = AutoTokenizer.from_pretrained(
-            config.hf_tokenizer_id or config.hf_name, trust_remote_code=True
+            config.hf_tokenizer_id or config.hf_name,
+            trust_remote_code=config.trust_remote_code,
         )
         if self._tokenizer.pad_token is None:
             self._tokenizer.pad_token = self._tokenizer.eos_token
 
         self._model = AutoModelForCausalLM.from_pretrained(
             config.hf_name,
-            quantization_config=build_quantization_config(config.quantization),
-            torch_dtype=torch.float16,
+            quantization_config=build_quantization_config(config.quantization, config.torch_dtype),
+            torch_dtype=getattr(torch, config.torch_dtype),
             device_map=config.device,
-            trust_remote_code=True,
+            trust_remote_code=config.trust_remote_code,
         )
         self._model.eval()
 

@@ -1,3 +1,12 @@
+# NOTE (RQ3): the claim below that a gradient is the most expensive possible menu
+# to randomise over is true FOR THE PURE-ASR QUESTION, which is what this menu was
+# preserved to answer. It does not hold for the risk-helpfulness frontier, where a
+# gradient is the correct shape and a mixture beats deterministic even against a
+# STATIC attacker, purely by interpolating between hull vertices. That is
+# configs/menus/frontier.yaml; see "The frontier question" in docs/menu-design.md.
+# This menu remains an ad-hoc gradient (nested pairs, mixed capability tiers);
+# `frontier` is the deliberate, minimal one.
+#
 # PRESERVED VERBATIM from the original full.yaml (only menu_id changed), because it
 # is the contrast arm, not dead config. `full` is now an ISO-SAFETY menu; this one
 # is the CAPABILITY/SAFETY GRADIENT, and the pair is a clean RQ4 ablation:

@@ -43,14 +43,15 @@ class GuardWrapper(Wrapper):
 
         logger.info(f"Loading guard {self.wrapper_id} ({key}, {self._config.quantization})")
         self._tokenizer = AutoTokenizer.from_pretrained(
-            self._config.hf_tokenizer_id or key, trust_remote_code=True
+            self._config.hf_tokenizer_id or key,
+            trust_remote_code=self._config.trust_remote_code,
         )
         self._model = AutoModelForCausalLM.from_pretrained(
             key,
             quantization_config=build_quantization_config(self._config.quantization),
             torch_dtype=torch.float16,
             device_map=self._config.device,
-            trust_remote_code=True,
+            trust_remote_code=self._config.trust_remote_code,
         )
         self._model.eval()
         _GUARD_CACHE[key] = (self._tokenizer, self._model)
@@ -163,14 +164,15 @@ class PIGuard(GuardWrapper):
 
         logger.info(f"Loading guard {self.wrapper_id} ({key}, {self._config.quantization})")
         self._tokenizer = AutoTokenizer.from_pretrained(
-            self._config.hf_tokenizer_id or key, trust_remote_code=True
+            self._config.hf_tokenizer_id or key,
+            trust_remote_code=self._config.trust_remote_code,
         )
         self._model = AutoModelForSequenceClassification.from_pretrained(
             key,
             quantization_config=build_quantization_config(self._config.quantization),
             torch_dtype=torch.float16,
             device_map=self._config.device,
-            trust_remote_code=True,
+            trust_remote_code=self._config.trust_remote_code,
         )
         self._model.eval()
         _GUARD_CACHE[key] = (self._tokenizer, self._model)

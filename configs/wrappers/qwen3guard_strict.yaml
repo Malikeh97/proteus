@@ -1,0 +1,21 @@
+# Qwen3Guard at BOTH stages with the Controversial band blocked -- the strict end
+# of the same mechanism as qwen3guard.yaml. Identical on every other axis: same
+# weights, same stages, shifted decision boundary (Qwen3Guard._is_unsafe reads
+# params.block_controversial).
+#
+# Shares hf_name with qwen3guard.yaml, and the guard cache in
+# menu/wrappers/guards.py is keyed on hf_name, so the two variants share ONE
+# loaded copy -- this wrapper costs no extra VRAM.
+#
+# Differs from qwen3guard_in_strict.yaml only in stage: that one is the input-only
+# half, used by the iso-safety `full` menu's boundary axis. This both-stage variant
+# is the safe anchor of the `frontier` menu, where it is paired with the small
+# model to make the least helpful, least risky member.
+wrapper_id: "qwen3guard_strict"
+type: "qwen3guard"
+stage: "both"
+hf_name: "Qwen/Qwen3Guard-Gen-4B"
+params_b: 4.02
+quantization: "4bit"
+params:
+  block_controversial: true

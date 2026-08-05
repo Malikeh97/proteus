@@ -10,7 +10,7 @@ menu: "full"
 selector: "minimax"
 attacker: "pair"
 held_out_attacker: "template"  # swap to "search" once that stub is implemented
-judge: "llama3.1_8b_judge"
+judge: "flow_judge"
 
 attack_benchmark: "harmbench"
 benign_benchmark: "xstest_alpaca"
