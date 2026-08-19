@@ -32,7 +32,13 @@ class BaseModel(ABC):
         return self._config.params_b
 
     @abstractmethod
-    def generate(self, prompt: str, **kwargs) -> Generation: ...
+    def generate(self, prompt: str, **kwargs) -> Generation:
+        """kwargs override the config's generation settings for this call only.
+        `system_prompt` is the one non-sampling key: it goes into a system turn of
+        the chat template rather than being prepended to the user message, which
+        is what instruct models are tuned to obey. Served models never pass it --
+        a system prompt is a defense, and defenses belong in wrappers, where the
+        menu can see them."""
 
     def generate_text(self, prompt: str, **kwargs) -> str:
         return self.generate(prompt, **kwargs).text

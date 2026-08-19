@@ -6,7 +6,7 @@
 # tau, so tau is swept in run_experiments.sh rather than fixed here.
 name: "rq1_randomized_vs_deterministic"
 
-menu: "full"
+menu: "mvp"
 selector: "uniform"
 attacker: "pair"
 judge: "flow_judge"

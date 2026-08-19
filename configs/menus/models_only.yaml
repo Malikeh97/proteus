@@ -1,10 +1,41 @@
 # Ablation: does portfolio diversity help without any defense mechanisms?
-# Isolates the model axis. |Q| = 4.
+# Isolates the model axis -- every served model in configs/models/, no wrappers.
+# |Q| = 10.
+#
+# EVERY SERVED MODEL, deliberately: this is the reference profile the other menus
+# draw their members from, so it is probed once per judge and reused rather than
+# re-measured per experiment. Members are whatever configs/models/ holds, minus
+# the four that are not served models -- flow_judge and llama3.1_8b_judge (judges)
+# and gemma3_4b_attacker / olmo3_7b_attacker (attacker-side, different decoding).
+#
+# THIS IS A GRADIENT, NOT A PORTFOLIO, and it is not iso-safety. It spans 1.5B to
+# 14B across three families plus an abliterated checkpoint, so JB_q ranges from
+# near-zero to near-one by construction. That maximises the dilution penalty a
+# mixture pays (see configs/menus/full.yaml on why spread is the price of
+# randomising), so a `deterministic` win here is the expected result and not
+# evidence about randomised deployment. What it IS good for:
+#   * a per-model reference J/S/Help table to select iso-safety members FROM,
+#     measured on the fit split so that choice is not made on Phase 2 data;
+#   * the model-axis arm of RQ4, against single_model's mechanism-axis arm;
+#   * the widest possible spread, as the contrast end of the dilution measurement.
+#
+# gemma3-12b-abliterated is the safety-stripped end of the range: expect it near
+# JB = 1. It is the upper bound of the model axis, not a candidate deployment
+# member.
 menu_id: "models_only"
 models:
-  - qwen3_8b
+  # Qwen3 / Qwen3.5 -- the main served family, 4B to 14B
   - qwen3_4b
-  - qwen2.5_3b
   - qwen3_4b_saferl
+  - qwen3_8b
+  - qwen3.5_9b
+  - qwen3_14b
+  # Qwen2.5 -- the previous generation, small tiers
+  - qwen2.5_1.5b
+  - qwen2.5_3b
+  # Gemma 3 -- different provenance
+  - gemma3_4b
+  - gemma3_12b
+  - gemma3_12b_abliterated
 wrappers: []
 subsets: "none"

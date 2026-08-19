@@ -55,23 +55,28 @@ class HFModel(BaseModel):
         )
         self._model.eval()
 
-    def _format(self, prompt: str) -> str:
+    def _format(self, prompt: str, system_prompt: str | None = None) -> str:
         if self._config.model_type == "base" or self._tokenizer.chat_template is None:
+            if system_prompt:
+                prompt = f"{system_prompt}\n\n{prompt}"
             return _BASE_TEMPLATE.format(prompt=prompt)
+        messages = [{"role": "user", "content": prompt}]
+        if system_prompt:
+            messages.insert(0, {"role": "system", "content": system_prompt})
         kwargs = {}
         if self._config.enable_thinking is not None:
             # Qwen3 templates accept this; others ignore unknown kwargs.
             kwargs["enable_thinking"] = self._config.enable_thinking
         try:
             return self._tokenizer.apply_chat_template(
-                [{"role": "user", "content": prompt}],
+                messages,
                 tokenize=False,
                 add_generation_prompt=True,
                 **kwargs,
             )
         except TypeError:
             return self._tokenizer.apply_chat_template(
-                [{"role": "user", "content": prompt}],
+                messages,
                 tokenize=False,
                 add_generation_prompt=True,
             )
@@ -80,7 +85,7 @@ class HFModel(BaseModel):
         import torch
 
         gen = self._config.generation
-        text = self._format(prompt)
+        text = self._format(prompt, kwargs.pop("system_prompt", None))
         inputs = self._tokenizer(text, return_tensors="pt").to(self._model.device)
         n_prompt = int(inputs["input_ids"].shape[-1])
 

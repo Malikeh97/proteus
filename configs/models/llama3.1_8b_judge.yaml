@@ -8,6 +8,6 @@ params_b: 8.03
 model_type: "instruct"
 quantization: "4bit"
 generation:
-  max_new_tokens: 8
-  temperature: 1.0
+  max_new_tokens: 512
+  temperature: 0.2
   do_sample: false

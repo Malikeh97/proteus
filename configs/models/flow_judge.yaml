@@ -21,6 +21,6 @@ model_type: "instruct"
 quantization: "none"
 torch_dtype: "bfloat16"
 generation:
-  max_new_tokens: 1024
-  temperature: 1.0
+  max_new_tokens: 512
+  temperature: 0.2
   do_sample: false

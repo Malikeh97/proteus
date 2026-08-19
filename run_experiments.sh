@@ -32,29 +32,29 @@ BASE="python scripts/run_game.py --output-dir $PROTEUS_OUTPUT_DIR --resume"
 RQ1="$BASE --experiment configs/experiments/paper/rq1_randomized_vs_deterministic.yaml"
 
 # --- Deterministic baseline (the point-mass comparator) ---
-submit "ex_rq1_det_pair_tau0.7_s42" "$RQ1 --selector deterministic --tau 0.7 --seeds 42"
-# submit "ex_rq1_det_pair_tau0.8_s42" "$RQ1 --selector deterministic --tau 0.8 --seeds 42"
-# submit "ex_rq1_det_pair_tau0.9_s42" "$RQ1 --selector deterministic --tau 0.9 --seeds 42"
+submit "ex_rq1_det_pair_tau0.7_s2002" "$RQ1 --selector deterministic --tau 0.7 --seeds 2002"
+# submit "ex_rq1_det_pair_tau0.8_s2002" "$RQ1 --selector deterministic --tau 0.8 --seeds 2002"
+# submit "ex_rq1_det_pair_tau0.9_s2002" "$RQ1 --selector deterministic --tau 0.9 --seeds 2002"
 
 # --- Uniform mixing ---
-submit "ex_rq1_uni_pair_tau0.7_s42" "$RQ1 --selector uniform --tau 0.7 --seeds 42"
-# submit "ex_rq1_uni_pair_tau0.8_s42" "$RQ1 --selector uniform --tau 0.8 --seeds 42"
-# submit "ex_rq1_uni_pair_tau0.9_s42" "$RQ1 --selector uniform --tau 0.9 --seeds 42"
+submit "ex_rq1_uni_pair_tau0.7_s2002" "$RQ1 --selector uniform --tau 0.7 --seeds 2002"
+# submit "ex_rq1_uni_pair_tau0.8_s2002" "$RQ1 --selector uniform --tau 0.8 --seeds 2002"
+# submit "ex_rq1_uni_pair_tau0.9_s2002" "$RQ1 --selector uniform --tau 0.9 --seeds 2002"
 
 # --- Validation-based weighting ---
-submit "ex_rq1_val_pair_tau0.7_s42" "$RQ1 --selector validation --tau 0.7 --seeds 42"
-# submit "ex_rq1_val_pair_tau0.8_s42" "$RQ1 --selector validation --tau 0.8 --seeds 42"
-# submit "ex_rq1_val_pair_tau0.9_s42" "$RQ1 --selector validation --tau 0.9 --seeds 42"
+submit "ex_rq1_val_pair_tau0.7_s2002" "$RQ1 --selector validation --tau 0.7 --seeds 2002"
+# submit "ex_rq1_val_pair_tau0.8_s2002" "$RQ1 --selector validation --tau 0.8 --seeds 2002"
+# submit "ex_rq1_val_pair_tau0.9_s2002" "$RQ1 --selector validation --tau 0.9 --seeds 2002"
 
 # --- Minimax over measured payoffs ---
-submit "ex_rq1_mm_pair_tau0.7_s42" "$RQ1 --selector minimax --tau 0.7 --seeds 42"
-# submit "ex_rq1_mm_pair_tau0.8_s42" "$RQ1 --selector minimax --tau 0.8 --seeds 42"
-# submit "ex_rq1_mm_pair_tau0.9_s42" "$RQ1 --selector minimax --tau 0.9 --seeds 42"
+submit "ex_rq1_mm_pair_tau0.7_s2002" "$RQ1 --selector minimax --tau 0.7 --seeds 2002"
+# submit "ex_rq1_mm_pair_tau0.8_s2002" "$RQ1 --selector minimax --tau 0.8 --seeds 2002"
+# submit "ex_rq1_mm_pair_tau0.9_s2002" "$RQ1 --selector minimax --tau 0.9 --seeds 2002"
 
 # --- Reasoner: prompt-conditional routing (capability-first, reroute on risk) ---
-submit "ex_rq1_rsn_pair_tau0.7_s42" "$RQ1 --selector reasoner --tau 0.7 --seeds 42"
-# submit "ex_rq1_rsn_pair_tau0.8_s42" "$RQ1 --selector reasoner --tau 0.8 --seeds 42"
-# submit "ex_rq1_rsn_pair_tau0.9_s42" "$RQ1 --selector reasoner --tau 0.9 --seeds 42"
+submit "ex_rq1_rsn_pair_tau0.7_s2002" "$RQ1 --selector reasoner --tau 0.7 --seeds 2002"
+# submit "ex_rq1_rsn_pair_tau0.8_s2002" "$RQ1 --selector reasoner --tau 0.8 --seeds 2002"
+# submit "ex_rq1_rsn_pair_tau0.9_s2002" "$RQ1 --selector reasoner --tau 0.9 --seeds 2002"
 
 # =============================================================================
 # RQ3 -- The risk-helpfulness frontier, on the capability-tiered menu.

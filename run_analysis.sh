@@ -11,18 +11,18 @@ ANALYSIS=$PROTEUS_OUTPUT_DIR/analysis
 mkdir -p "$ANALYSIS"
 
 # --- Phase 3: metrics ---
-python scripts/evaluate.py \
-    --results-dir "$PROTEUS_OUTPUT_DIR" \
-    --menu full \
-    --out "$ANALYSIS/metrics.csv" | tee "$ANALYSIS/summary.txt"
+# python scripts/evaluate.py \
+#     --results-dir "$PROTEUS_OUTPUT_DIR" \
+#     --menu full \
+#     --out "$ANALYSIS/metrics.csv" | tee "$ANALYSIS/summary.txt"
 
-# python scripts/evaluate.py --results-dir "$PROTEUS_OUTPUT_DIR" --menu small \
-#     --out "$ANALYSIS/metrics_small.csv" | tee "$ANALYSIS/summary_small.txt"
+python scripts/evaluate.py --results-dir "$PROTEUS_OUTPUT_DIR" --menu mvp \
+    --out "$ANALYSIS/metrics_mvp.csv" | tee "$ANALYSIS/summary_mvp.txt"
 
 # --- Phase 4: plots ---
-python scripts/plot_results.py --metrics "$ANALYSIS/metrics.csv"
+# python scripts/plot_results.py --metrics "$ANALYSIS/metrics.csv"
 
-# python scripts/plot_results.py --metrics "$ANALYSIS/metrics_small.csv" \
-#     --out-dir "$ANALYSIS/plots_small"
+python scripts/plot_results.py --metrics "$ANALYSIS/metrics_mvp.csv" \
+    --out-dir "$ANALYSIS/plots_mvp"
 
 echo "Analysis written to $ANALYSIS"

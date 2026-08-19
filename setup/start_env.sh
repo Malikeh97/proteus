@@ -53,8 +53,11 @@ function should_skip_job() {
 
     local two_days_ago
     two_days_ago=$(date -d '2 days ago' +%Y-%m-%d 2>/dev/null || date -v-2d +%Y-%m-%d)
+    # --endtime is REQUIRED alongside --state: without it sacct silently returns
+    # nothing here, so this guard never fired and re-running a launcher resubmitted
+    # every finished job -- two allocations to redo work already on disk.
     if sacct --name="$job_name" --user="$USER" --starttime="$two_days_ago" \
-        --state=COMPLETED --noheader 2>/dev/null | grep -q .; then
+        --endtime=now --state=COMPLETED --noheader 2>/dev/null | grep -q .; then
         echo "SKIP: Job '$job_name' completed successfully in the past 2 days."
         return 0
     fi

@@ -12,6 +12,8 @@
 # baselines read sensibly, add screened variants the way frontier.yaml does.
 menu_id: "mvp"
 configs:
-  - {model: qwen3.5_9b,     wrappers: []}   # capable tier, general instruct
-  - {model: qwen3_4b_saferl, wrappers: []}  # safety-RL aligned, cautious end
-  - {model: gemma3_4b,      wrappers: []}   # different provenance, general instruct
+  # - {model: qwen3.5_9b,     wrappers: []}   # capable tier, general instruct
+  - {model: qwen2.5_3b, wrappers: []} 
+  - {model: qwen3_14b,      wrappers: []}
+  - {model: qwen3_4b,      wrappers: []}   
+  - {model: qwen3_8b,      wrappers: []}   

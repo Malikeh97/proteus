@@ -30,7 +30,16 @@ set -e
 
 source setup/start_env.sh
 
-BASE="python scripts/probe_menu.py --output-dir $PROTEUS_OUTPUT_DIR --resume"
+BASE="python scripts/probe_menu.py --resume"
+
+# Per-block knobs, reset by every block that touches them. PROBE_OUT is the root
+# of the results tree; PROBE_EXTRA appends CLI overrides. A variant that changes
+# what gets MEASURED (judge, attacker, budget) must also change PROBE_OUT: the
+# shard path is {root}/{menu}/profile/{seed}/, with no judge in it, so two judges
+# at one root would interleave their verdicts in the same file and --resume would
+# read the other judge's trials as already done.
+PROBE_OUT="$PROTEUS_OUTPUT_DIR"
+PROBE_EXTRA=""
 
 # submit_menu <job-prefix> <experiment> <menu> <seed>...
 # One job per (model, seed). The model list comes from the menu YAML itself, so
@@ -44,7 +53,8 @@ function submit_menu() {
             # SLURM job names go into log filenames; model_ids carry '.' but nothing worse.
             job="${prefix}_s${seed}_${model//[^A-Za-z0-9._-]/_}"
             submit "$job" \
-                "$BASE --experiment $experiment --menu $menu --seeds $seed --model $model"
+                "$BASE --output-dir $PROBE_OUT --experiment $experiment --menu $menu \
+                 --seeds $seed --model $model $PROBE_EXTRA"
         done
     done
 }
@@ -70,7 +80,35 @@ function submit_menu() {
 # =============================================================================
 
 # submit_menu "pr_mvp" configs/experiments/base.yaml mvp 1997 2
-submit_menu "pr_mvp" configs/experiments/base.yaml mvp 1990
+# submit_menu "pr_mvp" configs/experiments/base.yaml mvp 1990
+
+# =============================================================================
+# JUDGE SENSITIVITY -- the mvp probe repeated with the Llama-3.1-8B judge in
+# place of FlowJudge, same menu, same seed, same prompts. How much of JB_q is the
+# judge rather than the configuration? See configs/judges/llama3.1_8b_judge.yaml
+# for why this one is a comparison arm and not a headline number.
+#
+# Writes to its own results ROOT so it cannot touch the FlowJudge tree; point the
+# downstream tools at it explicitly:
+#     python scripts/audit_menu.py --menu mvp --seed 1990 \
+#         --output-dir $SCRATCH/proteus-judge-llama
+#
+# The llama judge grades severity and helpfulness on the same 1-5 scales as
+# FlowJudge, so the two profiles carry the same columns and Help(q) is the
+# quality-weighted definition in both trees -- see configs/judges/llama3.1_8b_judge.yaml.
+# =============================================================================
+
+# The prefix carries a version because the RUBRIC is not in the output path
+# either. Superseded runs, archived beside the live tree:
+#   pr_mvpllama  -> proteus-judge-llama.longprompt  (the long safety rubric)
+#   pr_mvpllama2 -> proteus-judge-llama.nograded    (no severity or quality)
+# Bump it whenever judges/llm_judge.py changes what the judge is asked, or a
+# completed job of the same name gets skipped and the tree silently mixes rubrics.
+# PROBE_OUT="$SCRATCH/proteus-judge-llama"
+# PROBE_EXTRA="--judge llama3.1_8b_judge"
+# submit_menu "pr_mvpllama3" configs/experiments/base.yaml mvp 1990
+# PROBE_OUT="$PROTEUS_OUTPUT_DIR"
+# PROBE_EXTRA=""
 
 # =============================================================================
 # FULL MENU -- |Q| = 8. The ISO-SAFETY menu: members equally safe on their own,
@@ -112,5 +150,64 @@ submit_menu "pr_mvp" configs/experiments/base.yaml mvp 1990
 # ABLATION MENUS -- isolate the model axis vs the mechanism axis (RQ4)
 # =============================================================================
 
-# submit_menu "pr_models_only"  configs/experiments/base.yaml models_only 42
 # submit_menu "pr_single_model" configs/experiments/base.yaml single_model 42
+
+# =============================================================================
+# MODELS_ONLY -- |Q| = 10, EVERY served model, pair attacker, BOTH judges.
+#
+# The reference per-model J/S/Help table. Probed once and kept: later menus pick
+# their members from these numbers instead of re-measuring, and because probing
+# uses the FIT split while run_game.py uses the held-out EVAL split, choosing
+# members off this table does not select on Phase 2 data.
+#
+# Seed 42, matching run_experiments.sh -- every Phase 2 condition there runs at
+# --seeds 42, and run_game.py derives the profile path from the menu and seed, so
+# a profile at any other seed would simply not be found.
+#
+# BOTH JUDGES, two roots, 10 jobs each. Same menu, seed, prompts and attacker, so
+# the pair isolates the judge. Since judges/llm_judge.py now grades severity and
+# helpfulness on FlowJudge's scales, the two profiles carry the same columns and
+# are compared directly rather than one being J-only.
+#
+#     flow : $PROTEUS_OUTPUT_DIR/models_only/profile/42/profile.json
+#     llama: $SCRATCH/proteus-judge-llama/models_only/profile/42/profile.json
+#
+# Expect a WIDE spread -- 1.5B to 14B is a capability gradient, and the audit's
+# iso-safety and anti-chain checks will fail on it by construction. That is the
+# point: see the menu YAML. gemma3-12b-abliterated doubles as a positive control,
+# and should land near JB = 1; if it does not, suspect the attacker or the judge
+# before believing any other row.
+# =============================================================================
+
+# CHECK FOR A LEGACY probe.jsonl BEFORE RE-PROBING AN OLD SEED. --resume reads
+# {root}/{menu}/profile/{seed}/probe.jsonl (pre-sharding runs) as already-done
+# trials, and record_paths() folds it into the merge. The seed-42 file here was
+# measured in July under judge=llama3.1_8b_judge with n_benign=100, so four
+# members resume-skipped their whole fit split and the merged profile would have
+# mixed two judges and two Help definitions. Archived to 42.legacy-llama-jul25/;
+# those four were re-probed as pr_mo2_s42_*.
+# submit_menu "pr_mo" configs/experiments/base.yaml models_only 42
+
+# Superseded llama arms, and why the prefix carries a version -- the RUBRIC is not
+# in the output path, so a job name is the only place it is recorded:
+#   pr_mollama  cancelled before starting. Binary UNSAFE/SAFE verdict from a
+#               separate pass, which scored 87/90 mvp trials as breaks. See the
+#               comment above _SAFETY_SYSTEM_PROMPT in judges/llm_judge.py.
+#   pr_mollama2 verdict derived from the graded rubric at threshold 3, exactly as
+#               FlowJudge does, so the judge MODEL is the only difference between
+#               the two arms.
+# VERIFY A JUDGE CHANGE BEFORE SUBMITTING TEN JOBS BEHIND IT:
+#   python scripts/rejudge.py --records $SCRATCH/proteus-judge-llama/mvp/profile/1990 \
+#       --reference $PROTEUS_OUTPUT_DIR/mvp/profile/1990 --judge llama3.1_8b_judge
+# PROBE_OUT="$SCRATCH/proteus-judge-llama"
+# PROBE_EXTRA="--judge llama3.1_8b_judge"
+# submit_menu "pr_mollama2" configs/experiments/base.yaml models_only 1997
+# PROBE_OUT="$PROTEUS_OUTPUT_DIR"
+# PROBE_EXTRA=""
+
+
+
+# PROBE_OUT="$SCRATCH/proteus-judge-flow"
+# submit_menu "pr_moflow" configs/experiments/base.yaml models_only 1997
+# PROBE_OUT="$PROTEUS_OUTPUT_DIR"
+# PROBE_EXTRA=""
