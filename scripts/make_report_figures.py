@@ -21,7 +21,7 @@ qids = d["qids"]; pids = sorted(d["j_matrix"][qids[0]])
 J = np.array([[d["j_matrix"][q][p] for p in pids] for q in qids], float)
 jb = J.mean(1); helps = np.array([d["help_rate"][q] for q in qids])
 
-fig, axes = plt.subplots(1, 2, figsize=(6.5, 2.45),
+fig, axes = plt.subplots(1, 2, figsize=(6.5, 2.15),
                          gridspec_kw={"width_ratios": [1.0, 1.05]})
 
 ax = axes[0]
@@ -29,21 +29,24 @@ sel = np.array([q in SEL for q in qids])
 ax.axvline(TAU, color="crimson", ls="--", lw=1.0)
 ax.axvspan(0.55, TAU, color="crimson", alpha=0.06)
 ax.scatter(helps[~sel], jb[~sel], s=26, c="0.55", edgecolor="0.3", lw=.4,
-           label="excluded", zorder=3)
+           label="excluded", zorder=3, clip_on=False)
 ax.scatter(helps[sel], jb[sel], s=44, c="#2b6cb0", marker="D", edgecolor="black",
-           lw=0.4, label="selected", zorder=4)
-offs = {"qwen3-4b-saferl": (.004, .030), "gemma3-12b": (-.062, .019),
-        "qwen3.5-9b": (.004, -.050), "gemma3-4b": (.004, .019),
-        "qwen3-14b": (.006, -.032), "qwen2.5-3b-instruct": (-.056, -.058),
-        "qwen3-8b": (.005, .022), "qwen3-4b": (.005, .021),
-        "gemma3-12b-abliterated": (-.118, .023), "qwen2.5-1.5b-instruct": (.004, -.052)}
+           lw=0.4, label="selected", zorder=4, clip_on=False)
+# (dx, dy, ha) -- right-anchored labels keep the crowded low-JB corner legible
+offs = {"qwen3-4b-saferl": (.004, .030, "left"), "gemma3-12b": (-.006, .030, "right"),
+        "qwen3.5-9b": (-.006, -.026, "right"), "gemma3-4b": (-.050, .016, "left"),
+        "qwen3-14b": (.006, -.032, "left"), "qwen2.5-3b-instruct": (-.056, -.058, "left"),
+        "qwen3-8b": (.005, .022, "left"), "qwen3-4b": (.005, .021, "left"),
+        "gemma3-12b-abliterated": (-.046, -.045, "left"),
+        "qwen2.5-1.5b-instruct": (.000, .030, "left")}
 for q, h, b in zip(qids, helps, jb):
-    dx, dy = offs.get(q, (.004, .015)); ax.annotate(q, (h+dx, b+dy), fontsize=5.4)
+    dx, dy, ha = offs.get(q, (.004, .015, "left"))
+    ax.annotate(q, (h+dx, b+dy), fontsize=5.2, ha=ha)
 ax.text(TAU-.004, .53, r"$\tau=0.7$", rotation=90, va="top", ha="right", fontsize=6.5,
         color="crimson")
 ax.set_xlabel(r"Helpfulness $\mathrm{Help}(q)$", fontsize=8)
 ax.set_ylabel(r"Jailbreak rate $\mathrm{JB}(q)$", fontsize=8)
-ax.set_xlim(.545, .835); ax.set_ylim(-.06, .58)
+ax.set_xlim(.55, .835); ax.set_ylim(0, .58)
 ax.tick_params(labelsize=7)
 ax.legend(loc="upper right", fontsize=6.5, handletextpad=.3, borderpad=.3)
 ax.set_title("(a) Risk vs. helpfulness for the 10 members", fontsize=8)
@@ -81,13 +84,13 @@ sns.set_theme(style="whitegrid", context="paper", font_scale=0.78)
 OUT = Path("/project/6104653/ehghaghi/proteus/figures")
 m = pd.read_csv("/home/ehghaghi/scratch/ehghaghi/proteus/analysis/metrics_mvp.csv")
 
-ks = [1, 2, 3, 5, 8]
+ks = [1, 2, 3, 5, 8, 10]
 styles = {"deterministic": ("o", "-", "#c0392b"), "minimax": ("s", "--", "#8e44ad"),
           "uniform": ("^", "-.", "#2b6cb0"), "validation": ("v", ":", "#27ae60"),
           "reasoner": ("D", "--", "#e67e22")}
 order = ["deterministic", "minimax", "reasoner", "validation", "uniform"]
 
-fig, axes = plt.subplots(1, 2, figsize=(6.5, 2.0))
+fig, axes = plt.subplots(1, 2, figsize=(6.5, 1.75))
 
 ax = axes[0]
 for sel in order:

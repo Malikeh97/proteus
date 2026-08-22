@@ -112,7 +112,7 @@ def evaluate_run(run_dir: Path, target_asr: float, severe_threshold: int) -> tup
                 attack_records, attacker_params, target_asr
             ),
         }
-        for b in (1, 2, 3, 5, 8):
+        for b in (1, 2, 3, 5, 8, 10):
             row[f"asr_at_{b}"] = asr_at_budget(attack_records, b)
 
         # Attribute each jailbreak's severity to the configuration that served it,
